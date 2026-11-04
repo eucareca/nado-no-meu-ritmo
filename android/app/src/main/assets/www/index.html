@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+ <head>
+  <meta content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; media-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'" http-equiv="Content-Security-Policy"/>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <meta content="#071b2a" name="theme-color"/>
+  <meta content="Diário pessoal para ajustar treinos de natação, registrar sessões e acompanhar a evolução no seu ritmo." name="description"/>
+  <meta content="yes" name="apple-mobile-web-app-capable"/>
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+  <link href="manifest.webmanifest" rel="manifest"/>
+  <link href="icon.svg" rel="icon" type="image/svg+xml"/>
+  <link href="icon.svg" rel="apple-touch-icon"/>
+  <title>
+   Nado no meu ritmo
+  </title>
+  <link href="styles.css" rel="stylesheet"/>
+  <script src="settings.js">
+  </script>
+  <script src="local-store.js">
+  </script>
+ </head>
+ <body>
+  <div class="shell" id="appShell" style="display:block">
+   <header class="topbar">
+    <div class="brand">
+     <div class="brand-mark">
+      ≈
+     </div>
+     <div>
+      <div class="brand-name">
+       Nado no meu ritmo
+      </div>
+      <div class="brand-sub">
+       Diário de adaptação à natação
+      </div>
+     </div>
+    </div>
+    <div class="top-actions">
+     <button class="btn btn-quiet" id="settingsBtn" type="button">
+      Configurações
+     </button>
+     <span class="sync-status" id="syncStatus">
+      Sincronizado
+     </span>
+     <button class="btn btn-quiet" id="installBtn" style="display:none">
+      Instalar no celular
+     </button>
+     <div class="today" id="today">
+     </div>
+    </div>
+   </header>
+   <section class="hero">
+    <div class="hero-main">
+     <div class="eyebrow">
+      Seu espaço de evolução
+     </div>
+     <h1>
+      Um treino de cada vez.
+      <br/>
+      Sem pressa.
+     </h1>
+     <p>
+      Planeje a sessão, registre como ela aconteceu e perceba sua evolução ao longo do tempo — no seu próprio ritmo.
+     </p>
+     <div class="actions">
+      <button class="btn btn-primary" id="startBtn">
+       ＋ Registrar sessão
+      </button>
+      <button class="btn btn-secondary" id="editPlanBtn">
+       Ajustar treino inicial
+      </button>
+     </div>
+    </div>
+    <div class="hero-side">
+     <div>
+      <div class="side-head">
+       <div class="side-title">
+        Treino base · sessão 1
+       </div>
+       <span class="pill">
+        30 MIN
+       </span>
+      </div>
+      <div class="big-time">
+       30
+       <span>
+        minutos
+       </span>
+      </div>
+      <div class="side-caption">
+       Ritmo confortável · pausas incluídas
+      </div>
+      <div aria-hidden="true" class="mini-blocks">
+       <i>
+       </i>
+       <i>
+       </i>
+       <i>
+       </i>
+       <i>
+       </i>
+       <i>
+       </i>
+       <i>
+       </i>
+       <i>
+       </i>
+       <i>
+       </i>
+       <i>
+       </i>
+      </div>
+     </div>
+     <div class="side-foot">
+      Uma referência inicial. Ajuste os blocos antes de cada prática.
+     </div>
+    </div>
+   </section>
+   <main class="grid">
+    <section class="card">
+     <div class="card-head">
+      <div>
+       <h2>
+        Treino planejado
+       </h2>
+       <div class="sub">
+        Estrutura inicial — personalize quando quiser
+       </div>
+      </div>
+      <button class="btn btn-quiet" id="editPlanBtn2">
+       Editar
+      </button>
+     </div>
+     <div class="schedule" id="schedule">
+     </div>
+     <div class="food-note">
+      Ajuste os tempos e os blocos ao seu nível de conforto. Interrompa a prática se sentir mal-estar.
+     </div>
+    </section>
+    <section class="card">
+     <div class="card-head">
+      <div>
+       <h2>
+        Como a evolução será acompanhada
+       </h2>
+       <div class="sub">
+        Compare tempo, esforço e regularidade
+       </div>
+      </div>
+     </div>
+     <div class="progress">
+      <div class="metric">
+       <div class="metric-value" id="countMetric">
+        0
+       </div>
+       <div class="metric-label">
+        sessões registradas
+       </div>
+      </div>
+      <div class="metric">
+       <div class="metric-value" id="durationMetric">
+        —
+       </div>
+       <div class="metric-label">
+        duração média
+       </div>
+      </div>
+     </div>
+     <div style="margin-top:16px">
+      <div class="sub" style="margin-bottom:8px">
+       Duração real por sessão
+      </div>
+      <div id="chartWrap">
+      </div>
+     </div>
+     <div class="plan-next" id="nextPlan" style="margin-top:15px">
+      <b>
+       Próxima evolução:
+      </b>
+      comece observando como se sente com os blocos atuais. Depois, ajuste uma coisa de cada vez.
+     </div>
+    </section>
+    <section class="card wellness-card">
+     <div class="card-head">
+      <div>
+       <h2>
+        Meu peso
+       </h2>
+       <div class="sub">
+        Registre as medições para acompanhar sua própria evolução
+       </div>
+      </div>
+     </div>
+     <form class="wellness-form" id="weightForm">
+      <div class="field">
+       <label for="weightDate">
+        Data
+       </label>
+       <input id="weightDate" required="" type="date"/>
+      </div>
+      <div class="field">
+       <label for="weightKg">
+        Peso (kg)
+       </label>
+       <input id="weightKg" max="500" min="1" placeholder="Ex.: 72,5" required="" step="0.1" type="number"/>
+      </div>
+      <div class="field full">
+       <label for="weightNotes">
+        Observação (opcional)
+       </label>
+       <input id="weightNotes" maxlength="200" placeholder="Ex.: medição pela manhã"/>
+      </div>
+      <button class="btn btn-primary field full" type="submit">
+       Salvar peso
+      </button>
+     </form>
+     <div class="sub" style="margin-top:18px">
+      Registros recentes
+     </div>
+     <div class="wellness-list" id="weightList">
+     </div>
+    </section>
+    <section class="card wellness-card">
+     <div class="card-head">
+      <div>
+       <h2>
+        Atividade extra
+       </h2>
+       <div class="sub">
+        Alongamento, meditação ou outra atividade
+       </div>
+      </div>
+     </div>
+     <form class="wellness-form" id="activityForm">
+      <div class="field">
+       <label for="activityDate">
+        Data
+       </label>
+       <input id="activityDate" required="" type="date"/>
+      </div>
+      <div class="field">
+       <label for="activityType">
+        Atividade
+       </label>
+       <select id="activityType">
+        <option>
+         Alongamento
+        </option>
+        <option>
+         Meditação
+        </option>
+        <option>
+         Outra
+        </option>
+       </select>
+      </div>
+      <div class="field">
+       <label for="activityMinutes">
+        Duração (minutos)
+       </label>
+       <input id="activityMinutes" max="360" min="1" required="" type="number" value="10"/>
+      </div>
+      <div class="field">
+       <label for="activityNotes">
+        Observação (opcional)
+       </label>
+       <input id="activityNotes" maxlength="200" placeholder="Como foi?"/>
+      </div>
+      <button class="btn btn-primary field full" type="submit">
+       Registrar atividade
+      </button>
+     </form>
+     <div class="sub" style="margin-top:18px">
+      Atividades recentes
+     </div>
+     <div class="wellness-list" id="activityList">
+     </div>
+    </section>
+    <section class="card wellness-card">
+     <div class="card-head">
+      <div>
+       <h2>
+        Timer de atividade
+       </h2>
+       <div class="sub">
+        Defina o tempo para alongar, meditar ou fazer outra atividade
+       </div>
+      </div>
+     </div>
+     <div class="field">
+      <label for="timerActivity">
+       Atividade
+      </label>
+      <input id="timerActivity" maxlength="60" value="Alongamento"/>
+     </div>
+     <div class="field" style="margin-top:12px">
+      <label for="timerMinutes">
+       Tempo (minutos)
+      </label>
+      <input id="timerMinutes" max="180" min="1" type="number" value="10"/>
+     </div>
+     <div aria-live="polite" class="timer-display" id="timerDisplay">
+      10:00
+     </div>
+     <div class="timer-status" id="timerStatus">
+      O aviso sonoro toca quando a contagem termina.
+     </div>
+     <div class="timer-actions">
+      <button class="btn btn-primary" id="timerStart" type="button">
+       Iniciar timer
+      </button>
+      <button class="btn btn-secondary" id="timerReset" type="button">
+       Zerar
+      </button>
+      <button class="btn btn-quiet" id="timerTest" type="button">
+       Testar aviso
+      </button>
+      <button class="btn btn-quiet" id="timerAndroid" style="display:none" type="button">
+       Usar cronômetro do Android
+      </button>
+     </div>
+    </section>
+    <section class="card history-card">
+     <div class="card-head">
+      <div>
+       <h2>
+        Suas sessões
+       </h2>
+       <div class="sub">
+        O que foi planejado e o que realmente aconteceu
+       </div>
+      </div>
+      <button class="btn btn-quiet" id="exportBtn">
+       Exportar dados
+      </button>
+      <button class="btn btn-quiet" id="importBtn" type="button">
+       Importar dados
+      </button>
+      <input accept="application/json,.json" class="sr" id="importFile" type="file"/>
+     </div>
+     <div id="history">
+     </div>
+    </section>
+   </main>
+   <div class="disclaimer">
+    Registros salvos somente neste aparelho. Este diário não oferece orientação médica ou nutricional.
+   </div>
+  </div>
+  <div class="modal-backdrop" id="modalBackdrop">
+   <div aria-labelledby="modalTitle" aria-modal="true" class="modal" role="dialog">
+    <div class="modal-head">
+     <h2 id="modalTitle">
+      Registrar sessão
+     </h2>
+     <button aria-label="Fechar" class="close" id="closeModal">
+      ×
+     </button>
+    </div>
+    <form id="sessionForm">
+     <div class="form-grid">
+      <div class="field">
+       <label for="sessionDate">
+        Data da prática
+       </label>
+       <input id="sessionDate" required="" type="date"/>
+      </div>
+      <div class="field">
+       <label for="durationActual">
+        Duração real (minutos)
+       </label>
+       <input id="durationActual" max="240" min="1" required="" type="number" value="30"/>
+      </div>
+      <div class="field">
+       <label for="effort">
+        Percepção de esforço
+       </label>
+       <select id="effort">
+        <option>
+         Leve
+        </option>
+        <option selected="">
+         Confortável
+        </option>
+        <option>
+         Moderado
+        </option>
+        <option>
+         Alto
+        </option>
+        <option>
+         Muito alto
+        </option>
+       </select>
+      </div>
+      <div class="field">
+       <label for="progressNote">
+        Evolução planejada para a próxima
+       </label>
+       <input id="progressNote" placeholder="Ex.: repetir os blocos e observar o ritmo"/>
+      </div>
+      <div class="field full">
+       <label for="notes">
+        Observações da sessão
+       </label>
+       <textarea id="notes" placeholder="Como foi? O que ficou fácil ou pediu mais pausa?"></textarea>
+      </div>
+      <div class="actual-title">
+       Blocos realizados na prática
+      </div>
+      <div class="field full">
+       <label for="actualBlocks">
+        Descreva os blocos feitos (um por linha)
+       </label>
+       <textarea id="actualBlocks" placeholder="Ex.: 5 min de adaptação\n3 min nado + 1 min descanso (4 vezes)\n5 min nado leve"></textarea>
+      </div>
+     </div>
+     <div class="modal-footer">
+      <span class="sub">
+       A sessão salva seu treino atual como planejado.
+      </span>
+      <button class="btn btn-primary" type="submit">
+       Salvar sessão
+      </button>
+     </div>
+    </form>
+   </div>
+  </div>
+  <div class="toast" id="toast" role="status">
+  </div>
+  <script src="app.js">
+  </script>
+ </body>
+</html>

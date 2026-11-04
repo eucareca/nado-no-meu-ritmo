@@ -1,0 +1,17 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "br.com.tabinformatica.nadonomeritmo"
+    compileSdk 36
+    buildToolsVersion "35.0.0"
+
+    defaultConfig {
+        applicationId "br.com.tabinformatica.nadonomeritmo"
+        minSdk 23
+        targetSdk 36
+        versionCode 5
+        versionName "1.4.0"
+    }
+}

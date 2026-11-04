@@ -1,0 +1,7 @@
+Planeje sessões de natação, registre duração, esforço e observações e acompanhe seu próprio ritmo. Registre também peso e atividades extras, como alongamento e meditação.
+
+Os registros ficam somente no aparelho. O aplicativo não tem login, anúncios, rastreadores ou permissão de internet.
+
+Nas configurações, salve e restaure backups, use proteção por senha e escolha um aplicativo de e-mail para enviar o arquivo a si mesmo. O envio é manual e precisa ser confirmado no aplicativo escolhido.
+
+Inclui timer local e integração com o timer do Android. Não oferece orientação médica ou nutricional. Código-fonte sob Apache-2.0.

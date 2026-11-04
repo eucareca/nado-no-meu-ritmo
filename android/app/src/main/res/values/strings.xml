@@ -1,0 +1,13 @@
+<resources>
+    <string name="activity">Atividade</string>
+    <string name="invalid_timer">Use um tempo entre 1 segundo e 3 horas.</string>
+    <string name="timer_failed">Não foi possível abrir o timer do Android.</string>
+    <string name="no_file_app">Instale ou ative um gerenciador de arquivos para importar o backup.</string>
+    <string name="no_share_app">Não há aplicativo disponível para compartilhar o arquivo.</string>
+    <string name="invalid_email">Informe um e-mail válido nas configurações.</string>
+    <string name="backup_failed">Não foi possível preparar ou salvar o backup. Tente novamente.</string>
+    <string name="backup_saved">Backup salvo no local escolhido.</string>
+    <string name="backup_subject">Backup do Nado no meu ritmo</string>
+    <string name="backup_body">Backup dos meus registros do diário de natação. Se o arquivo estiver protegido, a senha será necessária para restaurá-lo.</string>
+    <string name="share_backup">Escolha seu aplicativo de e-mail</string>
+</resources>

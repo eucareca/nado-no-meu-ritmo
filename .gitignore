@@ -1,0 +1,16 @@
+.gradle/
+**/build/
+local.properties
+.env
+.env.*
+*.jks
+*.keystore
+*.apk
+*.aab
+*.zip
+*.tar.gz
+__pycache__/
+.venv/
+.DS_Store
+artifacts/
+entrega-fdroid/

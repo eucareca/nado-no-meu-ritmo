@@ -1,0 +1,1 @@
+Local-only release without login or sync. Adds backup, restore, manual sharing and password protection. No music or internet permission.

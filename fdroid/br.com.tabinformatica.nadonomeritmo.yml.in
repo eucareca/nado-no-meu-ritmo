@@ -1,0 +1,33 @@
+Categories:
+  - Sports & Health
+License: Apache-2.0
+AuthorName: Tiago Assis Brasil
+AuthorEmail: tiago@tabinformatica.com.br
+WebSite: https://tabinformatica.com.br/nadonoseuritmo
+SourceCode: @SOURCE_URL@
+IssueTracker: @ISSUES_URL@
+
+AutoName: Nado no meu ritmo
+Summary: Diário de natação local com backup protegido por senha
+Description: |-
+    Planeje sessões de natação, registre duração e esforço e acompanhe peso e atividades extras.
+    Os dados ficam no aparelho. Não há conta, anúncios, rastreadores ou acesso à internet.
+    Salve ou restaure backups e compartilhe um arquivo pelo seu aplicativo de e-mail.
+    O backup com senha é opcional e vem ativado por padrão.
+
+RepoType: git
+Repo: @REPO_URL@
+
+Builds:
+  - versionName: 1.4.0
+    versionCode: 5
+    commit: v1.4.0
+    subdir: android
+    gradle:
+      - yes
+    prebuild: ../scripts/sync-android-web.sh
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.4.0
+CurrentVersionCode: 5
