@@ -25,8 +25,19 @@ function backupDate(value) {
 }
 function backupPlan(plan) {
     if (!Array.isArray(plan) || !plan.length || plan.length > 64) throw new Error('Plano inválido.');
-    return plan.map(b => ({name: backupText(b.name, 160), minutes: backupNumber(b.minutes, 1, 1440),
-        type: ['nado', 'serie', 'descanso', 'leve'].includes(b.type) ? b.type : 'nado', detail: backupText(b.detail)}));
+    return plan.map(b => {
+        const block = {name: backupText(b.name, 160), minutes: backupNumber(b.minutes, 1 / 60, 1440),
+            type: ['nado', 'serie', 'descanso', 'leve'].includes(b.type) ? b.type : 'nado', detail: backupText(b.detail)};
+        if (block.type === 'serie' && b.rounds !== undefined) {
+            for (const [key, min, max] of [['rounds',1,100],['workSeconds',1,10800],['restSeconds',0,600]]) {
+                block[key] = backupNumber(b[key], min, max);
+                if (!Number.isInteger(block[key])) throw new Error('Use números inteiros nas repetições e segundos.');
+            }
+            block.minutes = (block.rounds * block.workSeconds + (block.rounds - 1) * block.restSeconds) / 60;
+            if (block.minutes > 1440) throw new Error('Série muito longa.');
+        }
+        return block;
+    });
 }
 function validatedDiary(raw) {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Formato de diário inválido.');
@@ -38,9 +49,9 @@ function validatedDiary(raw) {
     return {
         plan: backupPlan(raw.plan), planHint: backupText(raw.planHint),
         sessions: list('sessions').map(s => ({id: crypto.randomUUID(), date: backupDate(s.date),
-            duration: backupNumber(s.duration, 1, 1440), effort: ['Confortável', 'Alto', 'Muito alto'].includes(s.effort) ? s.effort : 'Confortável',
+            duration: backupNumber(s.duration, 1, 1440), effort: ['Leve', 'Confortável', 'Moderado', 'Alto', 'Muito alto'].includes(s.effort) ? s.effort : 'Confortável',
             notes: backupText(s.notes), next: backupText(s.next), actualBlocks: backupText(s.actualBlocks, 8000),
-            planMinutes: backupNumber(s.planMinutes || 30, 1, 92160), plan: backupPlan(s.plan || raw.plan)})),
+            planMinutes: backupNumber(s.planMinutes || 30, 1 / 60, 92160), plan: backupPlan(s.plan || raw.plan)})),
         weights: list('weights').map(w => ({id: crypto.randomUUID(), date: backupDate(w.date), kg: backupNumber(w.kg, 1, 1000), notes: backupText(w.notes)})),
         activities: list('activities').map(a => ({id: crypto.randomUUID(), date: backupDate(a.date), type: backupText(a.type, 120), minutes: backupNumber(a.minutes, 1, 1440), notes: backupText(a.notes)}))
     };
@@ -152,6 +163,7 @@ async function importDiary(file) {
         const db = diaryRecords(diary);
         // Replace the full diary atomically after validation, decryption, and confirmation.
         localStorage.setItem(RECORDS_KEY, JSON.stringify(db));
+        resetWorkout(); sessionWorkout = null;
         await enterApp({id: 'local'});
         message.textContent = 'Backup importado.';
         toast('Backup importado.');
@@ -185,6 +197,7 @@ function setupSettings() {
         if (!confirm('Apagar todos os registros locais? Faça um backup antes de continuar.')) return;
         localStorage.removeItem(RECORDS_KEY); localStorage.removeItem(activeCacheKey); localStorage.removeItem(EMAIL_KEY); localStorage.removeItem('nadoMeuRitmo.v1');
         document.getElementById('backupEmail').value = ''; document.getElementById('backupPassword').value = '';
+        resetWorkout(); sessionWorkout = null;
         await enterApp({id: 'local'}); toast('Registros locais apagados.');
     };
     document.addEventListener('keydown', event => {
