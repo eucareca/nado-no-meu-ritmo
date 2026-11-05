@@ -44,6 +44,10 @@ public final class MainActivity extends Activity {
     private HealthImporter healthImporter;
     private String healthRequestId;
     private static final int HEALTH_PERMISSIONS = 30;
+    private static final int TRAINING_NOTIFICATION_PERMISSION = 31;
+    private String pendingTrainingId;
+    private String pendingTrainingAction;
+    private JSONObject pendingTrainingConfig;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -69,6 +73,9 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setUserAgentString(settings.getUserAgentString() + " NadoFoss/1");
         webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                if (getIntent().getBooleanExtra("openTraining",false)) openTrainingPanel();
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return !request.isForMainFrame() || handleNavigation(request.getUrl());
             }
@@ -101,6 +108,7 @@ public final class MainActivity extends Activity {
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBack);
         }
         webView.loadUrl(ORIGIN + PREFIX + "index.html");
+        TrainingReminders.schedule(this);
     }
 
     private WebResourceResponse bundledAsset(Uri uri) {
@@ -127,13 +135,66 @@ public final class MainActivity extends Activity {
     private boolean handleNavigation(Uri uri) {
         if ("nado".equals(uri.getScheme())) {
             if (!(ORIGIN + PREFIX + "index.html").equals(webView.getUrl())) return true;
-            if ("health".equals(uri.getHost())) handleHealth(uri);
+            if ("training".equals(uri.getHost())) handleTraining(uri);
+            else if ("health".equals(uri.getHost())) handleHealth(uri);
             else if ("timer".equals(uri.getHost())) startTimer(uri);
             else if ("save-backup".equals(uri.getHost())) exportBackup(false);
             else if ("share-backup".equals(uri.getHost())) exportBackup(true);
             return true;
         }
         return !ORIGIN.equals(uri.getScheme() + "://" + uri.getAuthority());
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent); setIntent(intent);
+        if (intent.getBooleanExtra("openTraining",false)) openTrainingPanel();
+    }
+    private void openTrainingPanel() {
+        if (webView != null && (ORIGIN+PREFIX+"index.html").equals(webView.getUrl())) {
+            webView.evaluateJavascript("document.getElementById('trainingPlanner') && document.getElementById('trainingPlanner').scrollIntoView({block:'start'});",null);
+            getIntent().removeExtra("openTraining");
+        }
+    }
+    private void trainingReply(String id,String message,Boolean enabled) {
+        if (webView==null || !(ORIGIN+PREFIX+"index.html").equals(webView.getUrl())) return;
+        JSONObject result=new JSONObject();
+        try { result.put("message",message);if(enabled!=null)result.put("enabled",enabled); }catch(org.json.JSONException ignored) { }
+        webView.evaluateJavascript("window.receiveTrainingResult && window.receiveTrainingResult("+JSONObject.quote(id)+","+result+");",null);
+    }
+    private void handleTraining(Uri uri) {
+        String id=uri.getQueryParameter("id"), action=uri.getQueryParameter("action");
+        if(id==null || !id.matches("[a-zA-Z0-9-]{1,64}"))return;
+        try {
+            if("disable".equals(action)) {TrainingReminders.disable(this);trainingReply(id,"Lembretes locais desativados. Eventos já salvos na agenda devem ser removidos nela.",false);return;}
+            if("status".equals(action)) {
+                boolean enabled=TrainingReminders.enabled(this), allowed=TrainingReminders.notificationsAllowed(this);
+                trainingReply(id,enabled?(allowed?"Lembretes ativos neste aparelho. O Android pode atrasar os avisos por economia de bateria.":"O plano de lembretes está salvo, mas as notificações estão bloqueadas nas configurações do Android."):"Lembretes desativados neste aparelho.",enabled);return;
+            }
+            if("calendar".equals(action)) {
+                TrainingReminders.calendar(this,new JSONObject(uri.getQueryParameter("data")));
+                trainingReply(id,"Agenda aberta. Confira a conta Google, o horário, a repetição e o lembrete; salve o evento na agenda. Alterações feitas lá não voltam ao diário.",null);return;
+            }
+            if(!"apply".equals(action) && !"test".equals(action))return;
+            if(pendingTrainingId!=null){trainingReply(id,"Conclua a autorização de notificações já aberta.",null);return;}
+            JSONObject config="apply".equals(action)?TrainingReminders.validate(new JSONObject(uri.getQueryParameter("data"))):null;
+            if(android.os.Build.VERSION.SDK_INT>=33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                pendingTrainingId=id;pendingTrainingAction=action;pendingTrainingConfig=config;
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},TRAINING_NOTIFICATION_PERMISSION);
+            } else finishTrainingAction(id,action,config);
+        }catch(android.content.ActivityNotFoundException error) {trainingReply(id,"Não foi encontrado aplicativo de calendário. Instale ou ative a Agenda Google; no navegador você também pode baixar o evento .ics.",null);}
+        catch(RuntimeException | org.json.JSONException error) {trainingReply(id,"Não foi possível concluir. Confira os dias, horários e permissões do Android.",null);}
+    }
+    private void finishTrainingAction(String id,String action,JSONObject config) {
+        if(!TrainingReminders.notificationsAllowed(this)) {
+            if("apply".equals(action))TrainingReminders.disable(this);
+            trainingReply(id,"Notificações bloqueadas. Autorize-as nas configurações do Android e tente ativar os lembretes novamente.","apply".equals(action)?false:null);return;
+        }
+        if("test".equals(action)) {TrainingReminders.show(this,"Teste de lembrete","O aviso de natação está funcionando. Este teste não cria um compromisso.");trainingReply(id,"Notificação de teste enviada. Confira a área de notificações do celular.",null);return;}
+        try {
+            TrainingReminders.apply(this,config);
+            boolean enabled=TrainingReminders.enabled(this);
+            trainingReply(id,enabled?"Lembretes locais ativados. Você será avisado antes dos dias e horários salvos. O Android pode atrasar os avisos.":"Não foi possível programar os lembretes. Tente novamente.",enabled);
+        }catch(org.json.JSONException error){trainingReply(id,"Não foi possível guardar os lembretes neste aparelho.",false);}
     }
 
     private void healthReply(String id, JSONObject payload) {
@@ -180,6 +241,11 @@ public final class MainActivity extends Activity {
     }
     @Override public void onRequestPermissionsResult(int code, String[] permissions, int[] grants) {
         super.onRequestPermissionsResult(code, permissions, grants);
+        if (code==TRAINING_NOTIFICATION_PERMISSION && pendingTrainingId!=null) {
+            String id=pendingTrainingId, action=pendingTrainingAction;JSONObject config=pendingTrainingConfig;
+            pendingTrainingId=null;pendingTrainingAction=null;pendingTrainingConfig=null;
+            finishTrainingAction(id,action,config);
+        }
         if (code == HEALTH_PERMISSIONS && android.os.Build.VERSION.SDK_INT >= 34 && healthImporter != null && healthRequestId != null) {
             String id = healthRequestId; healthRequestId = null;
             healthImporter.read(id);

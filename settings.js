@@ -55,6 +55,23 @@ function validatedHealthData(raw) {
     if (raw.heartRateAverage != null) result.heartRateAverage = backupNumber(raw.heartRateAverage, 1, 300);
     return result;
 }
+function validateTrainingSchedule(raw, restore = false) {
+    if (raw === undefined || raw === null) return null;
+    if (typeof raw !== 'object' || !Array.isArray(raw.revisions) || raw.revisions.length < 1 || raw.revisions.length > 256) throw new Error('O plano de horários deve ter de 1 a 256 revisões.');
+    let previous = 0;
+    const revisions = raw.revisions.map(period => {
+        if (!period || !Array.isArray(period.days) || !period.days.length || period.days.length > 7 || period.days.some(day=>!Number.isInteger(day)||day<0||day>6) || new Set(period.days).size!==period.days.length) throw new Error('Escolha pelo menos um dia válido da semana.');
+        if (typeof period.time !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(period.time)) throw new Error('Informe um horário válido.');
+        if (typeof period.effectiveAt !== 'string' || period.effectiveAt.length>40 || !Number.isFinite(Date.parse(period.effectiveAt))) throw new Error('Data do plano inválida.');
+        const instant = Date.parse(period.effectiveAt);
+        if (instant <= previous) throw new Error('As revisões do plano devem seguir a ordem de data.');
+        previous = instant;
+        const durationMinutes=backupNumber(period.durationMinutes,1,240), reminderMinutes=backupNumber(period.reminderMinutes,0,1440);
+        if (!Number.isInteger(durationMinutes)||!Number.isInteger(reminderMinutes)) throw new Error('Use minutos inteiros no planejamento.');
+        return {days:[...period.days].sort((a,b)=>a-b),time:period.time,durationMinutes,reminderMinutes,effectiveAt:new Date(instant).toISOString()};
+    });
+    return {revisions,remindersEnabled:!restore && raw.remindersEnabled === true};
+}
 function validatedDiary(raw) {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Formato de diário inválido.');
     const list = name => {
@@ -63,7 +80,7 @@ function validatedDiary(raw) {
         return rows;
     };
     return {
-        plan: backupPlan(raw.plan), planHint: backupText(raw.planHint),
+        plan: backupPlan(raw.plan), planHint: backupText(raw.planHint), trainingSchedule:validateTrainingSchedule(raw.trainingSchedule,true),
         sessions: list('sessions').map(s => ({id: crypto.randomUUID(), date: backupDate(s.date),
             duration: backupNumber(s.duration, 1, 1440), effort: ['Leve', 'Confortável', 'Moderado', 'Alto', 'Muito alto', 'Não informado'].includes(s.effort) ? s.effort : 'Confortável',
             notes: backupText(s.notes), next: backupText(s.next), actualBlocks: backupText(s.actualBlocks, 8000),
@@ -112,7 +129,7 @@ async function decodeDiary(backup, password) {
     } catch (_) { throw new Error('Senha incorreta ou arquivo danificado.'); }
 }
 async function makeBackup() {
-    const diary = {plan: state.plan, planHint: state.planHint || '', sessions: state.sessions, weights: state.weights, activities: state.activities};
+    const diary = {trainingSchedule: state.trainingSchedule || null, plan: state.plan, planHint: state.planHint || '', sessions: state.sessions, weights: state.weights, activities: state.activities};
     const protect = document.getElementById('protectBackup').checked;
     const password = document.getElementById('backupPassword').value;
     const result = protect ? await encryptDiary(diary, password) : {format: BACKUP_FORMAT, version: 1, encrypted: false, diary};
@@ -183,7 +200,8 @@ async function importDiary(file) {
         localStorage.setItem(RECORDS_KEY, JSON.stringify(db));
         resetWorkout(); sessionWorkout = null;
         await enterApp({id: 'local'});
-        message.textContent = 'Backup importado.';
+        if (window.resetTrainingNative) window.resetTrainingNative();
+        message.textContent = 'Backup importado. Reative os lembretes se desejar.';
         toast('Backup importado.');
     } catch (error) { message.textContent = 'Não foi possível importar: ' + error.message; toast('Não foi possível importar o arquivo.'); }
 }
@@ -199,7 +217,7 @@ function setupSettings() {
       <p class="sub">A senha não é guardada. Sem ela, um backup protegido não pode ser recuperado. Não envie a senha junto com o arquivo.</p>
       <div class="actions"><button id="saveBackup" class="btn btn-primary">Salvar backup</button><button id="emailBackup" class="btn btn-secondary">Enviar backup por e-mail</button><button id="restoreBackup" class="btn btn-secondary">Importar backup</button></div>
       <p id="settingsMessage" role="status" aria-live="polite"></p></section>
-      <section class="card"><h2>Privacidade</h2><p>Este aplicativo não tem login, anúncios, rastreadores nem envio automático de dados para servidores. Não tem permissão de internet no Android. A importação opcional por Health Connect (Android 14+) lê exercícios, distância e frequência cardíaca média, após sua autorização e seleção. Ela não altera dados de outros aplicativos. Sessões, peso, atividades e plano ficam no armazenamento privado do aplicativo, sem criptografia própria em repouso. A proteção do aparelho e do bloqueio de tela é importante.</p><p>Ao compartilhar um backup, somente o arquivo e o e-mail informado são entregues ao aplicativo que você escolher. Ele passa a ser responsável pelo envio e pelo tratamento desses dados. O Nado no meu ritmo nunca envia mensagens automaticamente.</p><p>Os backups automáticos do sistema e a transferência automática entre aparelhos estão desativados. O backup manual pode ser criptografado com AES-256-GCM e uma senha escolhida por você.</p><p>Suporte: Tiago Assis Brasil · tiago@tabinformatica.com.br<br>tabinformatica.com.br/nadonoseuritmo<br>Licença Apache-2.0 · versão 1.6.0</p></section>
+      <section class="card"><h2>Privacidade</h2><p>Este aplicativo não tem login, anúncios, rastreadores nem envio automático de dados para servidores. Não tem permissão de internet no Android. A importação opcional por Health Connect (Android 14+) lê exercícios, distância e frequência cardíaca média, após sua autorização e seleção. Ela não altera dados de outros aplicativos. Sessões, peso, atividades e plano ficam no armazenamento privado do aplicativo, sem criptografia própria em repouso. A proteção do aparelho e do bloqueio de tela é importante.</p><p>Ao compartilhar um backup, somente o arquivo e o e-mail informado são entregues ao aplicativo que você escolher. Ele passa a ser responsável pelo envio e pelo tratamento desses dados. O Nado no meu ritmo nunca envia mensagens automaticamente.</p><p>Os backups automáticos do sistema e a transferência automática entre aparelhos estão desativados. O backup manual pode ser criptografado com AES-256-GCM e uma senha escolhida por você.</p><p>Suporte: Tiago Assis Brasil · tiago@tabinformatica.com.br<br>tabinformatica.com.br/nadonoseuritmo<br>Licença Apache-2.0 · versão 1.7.0</p></section>
       <section class="card"><h2>Apagar registros locais</h2><p>Esta ação não apaga arquivos já exportados, e-mails ou anexos enviados.</p><button id="eraseDiary" class="btn btn-secondary">Apagar todos os registros deste aparelho</button></section></div>`;
     document.body.append(page);
     document.getElementById('backupEmail').value = localStorage.getItem(EMAIL_KEY) || '';
@@ -216,7 +234,7 @@ function setupSettings() {
         localStorage.removeItem(RECORDS_KEY); localStorage.removeItem(activeCacheKey); localStorage.removeItem(EMAIL_KEY); localStorage.removeItem('nadoMeuRitmo.v1');
         document.getElementById('backupEmail').value = ''; document.getElementById('backupPassword').value = '';
         resetWorkout(); sessionWorkout = null;
-        await enterApp({id: 'local'}); toast('Registros locais apagados.');
+        await enterApp({id: 'local'}); if (window.resetTrainingNative) window.resetTrainingNative(); toast('Registros locais apagados.');
     };
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') { page.classList.remove('open'); document.getElementById('backupPassword').value = ''; }
@@ -225,7 +243,7 @@ function setupSettings() {
 
 function diaryRecords(diary) {
     return {
-            swim_settings: [{user_id: 'local', plan: diary.plan, plan_hint: diary.planHint}],
+            swim_settings: [{user_id: 'local', plan: diary.plan, plan_hint: diary.planHint, training_schedule: diary.trainingSchedule || null}],
             swim_sessions: diary.sessions.map(s => ({id: s.id, user_id: 'local', session_date: s.date, duration_minutes: s.duration, effort: s.effort, notes: s.notes, next_progression: s.next, actual_blocks: s.actualBlocks, planned_minutes: s.planMinutes, planned_blocks: s.plan, health_data: s.health || null})),
             swim_weight_entries: diary.weights.map(w => ({id: w.id, user_id: 'local', measurement_date: w.date, weight_kg: w.kg, notes: w.notes})),
             swim_extra_activities: diary.activities.map(a => ({id: a.id, user_id: 'local', activity_date: a.date, activity_type: a.type, duration_minutes: a.minutes, notes: a.notes}))

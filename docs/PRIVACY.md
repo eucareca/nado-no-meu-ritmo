@@ -1,6 +1,6 @@
 # Política de privacidade
 
-Aplicativo: Nado no meu ritmo, versão 1.6.0 em preparação.
+Aplicativo: Nado no meu ritmo, versão 1.7.0 em preparação.
 Responsável: Tiago Assis Brasil.
 Contato: tiago@tabinformatica.com.br
 Site: https://tabinformatica.com.br/nadonoseuritmo
@@ -22,6 +22,14 @@ A consulta ocorre por ação do usuário, com o app aberto. Não há leitura em 
 Você revisa e marca quais treinos guardar. As cópias salvas incluem o aplicativo e o identificador do registro de origem, horários e métricas disponíveis. Esses campos permitem reconhecer importações repetidas e entram no backup manual. Revogar o acesso nas configurações do Health Connect impede novas consultas, mas não apaga cópias já importadas. Excluir uma sessão ou apagar o diário remove apenas os registros locais; não altera as origens nem backups já exportados.
 
 Esta primeira implementação consulta no máximo 2.000 registros de exercício e apresenta até 100 sessões de natação por busca. A tela informa quando o limite é atingido. Dados temporários da consulta são descartados ao fechar a janela ou reiniciar o aplicativo. Nenhum dado real de saúde deve ser incluído em logs, capturas, testes ou no repositório.
+
+## Planejamento e notificações
+
+O plano de dias e horários e seu histórico de alterações ficam no diário e entram no backup manual. Ao ativar lembretes no Android, o plano atual também é guardado nas preferências privadas do aplicativo para programar notificações locais. A permissão POST_NOTIFICATIONS é solicitada quando necessária; RECEIVE_BOOT_COMPLETED permite reprogramar avisos após reiniciar. Não há push por servidor, identificador publicitário ou serviço de notificações externo.
+
+Desativar lembretes cancela os alarmes locais. Apagar o diário ou importar um backup também desativa a configuração nativa; após restaurar, é necessário reativar os lembretes explicitamente. Isso não apaga eventos já salvos em outros calendários. Os avisos seguem as restrições de bateria e permissões do Android.
+
+Adicionar à Agenda Google entrega um título genérico de natação, início/fim, descrição e repetição semanal ao aplicativo de calendário escolhido. Você escolhe a conta e confirma o salvamento nele. O calendário passa a tratar esses dados segundo suas políticas, inclusive sua eventual sincronização em nuvem. O diário não pede acesso à conta Google nem permissões READ_CALENDAR ou WRITE_CALENDAR. Eventos externos não são lidos para confirmar presença. No navegador, o arquivo `.ics` só é gerado após sua solicitação.
 
 ## Backups manuais
 

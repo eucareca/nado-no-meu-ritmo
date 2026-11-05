@@ -38,6 +38,7 @@ jobs:
           .venv/bin/python tests/test_local.py
           .venv/bin/python tests/test_workouts.py
           .venv/bin/python tests/test_health_import.py
+          .venv/bin/python tests/test_training_planner.py
       - name: Instalar as ferramentas Android fixadas pelo projeto
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;35.0.0'

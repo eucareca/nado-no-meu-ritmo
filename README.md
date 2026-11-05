@@ -31,6 +31,14 @@ Autorize a leitura, revise os últimos 28 dias e marque os treinos a importar. E
 
 A duração importada corresponde ao intervalo início/fim, arredondado em minutos, e pode incluir pausas. A compatibilidade com dados reais de cada modelo ainda precisa ser validada em aparelho. Veja [privacidade](docs/PRIVACY.md).
 
+## Dias, agenda e frequência
+
+Em **Dias de natação e frequência**, escolha os dias, horário, duração e antecedência do aviso. Salvar o plano não ativa notificações nem cria eventos externos. **Ativar lembretes** solicita permissão no Android 13+ e programa avisos locais. **Testar notificação**, **Consultar lembretes** e **Desativar lembretes** permitem conferir e controlar os avisos. O Android pode atrasar alarmes por economia de bateria; não há promessa de precisão de minuto. O aplicativo tenta reprogramar os avisos após reiniciar o aparelho, mudar o fuso/horário ou atualizar o pacote. Forçar a parada do aplicativo pode impedir avisos até que ele seja aberto novamente.
+
+**Adicionar à Agenda Google** abre um evento semanal recorrente para revisão e salvamento na conta escolhida; se o Google Calendar não estiver instalado, abre um calendário compatível. O diário não recebe acesso à conta nem permissão de leitura/escrita da agenda. Não é sincronização bidirecional: editar ou excluir o evento externo não muda os lembretes ou o plano do diário. Enviar novamente pode duplicar o evento. No navegador, o mesmo planejamento pode ser baixado como arquivo `.ics`.
+
+O painel mostra dias previstos na semana, dias com registro e dias passados ainda sem registro. Uma sessão registrada/importada confirma somente a data informada: não comprova presença na aula agendada. Mais de uma sessão no mesmo dia conta como um dia de frequência. Dias extras aparecem separadamente. Mudanças no plano passam a valer no momento de salvar e preservam as revisões anteriores. O backup inclui esse histórico; restaurar um backup mantém os lembretes desativados até nova ativação no aparelho.
+
 ## Atualização pelo celular
 
 A rotina de compilação no GitHub Actions disponibiliza um APK de teste que instala ao lado do diário principal e um release sem assinatura. Para atualizar o diário principal, é necessária a chave original. Veja [como baixar, testar e preparar a atualização](docs/ATUALIZACAO-ANDROID.md).
@@ -60,6 +68,7 @@ python3 -m venv .venv
 .venv/bin/python tests/test_local.py
 .venv/bin/python tests/test_workouts.py
 .venv/bin/python tests/test_health_import.py
+.venv/bin/python tests/test_training_planner.py
 ```
 
 Os testes usam somente dados fictícios e bloqueiam requisições externas. Leia `docs/PRIVACY.md`, `docs/SECURITY.md` e `docs/F-DROID.md` para os limites, permissões e passos de submissão.

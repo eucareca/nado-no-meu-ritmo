@@ -148,6 +148,8 @@ async function enterApp(user) {
         state.sessions = rows.map(remoteToLocal);
         state.plan = setting && Array.isArray(setting.plan) && setting.plan.length ? setting.plan : structuredClone(defaultPlan);
         state.planHint = setting ? setting.plan_hint || '' : '';
+        state.trainingSchedule = validateTrainingSchedule(setting?.training_schedule || null);
+        document.dispatchEvent(new Event('diaryLoaded'));
         save();
         document.getElementById('weightDate').value = new Date().toLocaleDateString('en-CA');
         document.getElementById('activityDate').value = new Date().toLocaleDateString('en-CA');
@@ -174,6 +176,7 @@ async function persistPlan() {
         user_id: currentUser.id,
         plan: state.plan,
         plan_hint: state.planHint || '',
+        training_schedule: state.trainingSchedule || null,
         updated_at: new Date().toISOString()
     });
     if (error) throw error;
@@ -225,6 +228,7 @@ function renderHistory() {
     document.getElementById('countMetric').textContent = sessions.length;
     document.getElementById('durationMetric').textContent = sessions.length ? Math.round(sessions.reduce((n, x) => n + (+x.duration || 0), 0) / sessions.length) + ' min' : '—';
     drawChart();
+    document.dispatchEvent(new Event('diaryChanged'));
     const last = sessions[0];
     document.getElementById('nextPlan').innerHTML = last && last.next ? `<b>Próxima evolução:</b> ${escapeHtml(last.next)}` : `<b>Próxima evolução:</b> ${escapeHtml(state.planHint||NEXT_PROGRESSION)}`;
     host.querySelectorAll('[data-delete]').forEach(b => b.onclick = async () => {
