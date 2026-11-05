@@ -1,6 +1,6 @@
 # Política de privacidade
 
-Aplicativo: Nado no meu ritmo, versão 1.9.0 em preparação.
+Aplicativo: Nado no meu ritmo, versão 1.10.0 em preparação.
 Responsável: Tiago Assis Brasil.
 Contato: tiago@tabinformatica.com.br
 Site: https://tabinformatica.com.br/nadonoseuritmo
@@ -9,7 +9,7 @@ Site: https://tabinformatica.com.br/nadonoseuritmo
 
 O aplicativo registra as informações fornecidas por você e as sessões cuja importação você autorizar: plano de natação, datas, duração, esforço, observações, peso e atividades extras. O e-mail para backup é guardado localmente se informado. O Android armazena esses dados na área privada do aplicativo.
 
-Não há conta, sincronização, servidor, rastreamento, anúncios ou acesso à internet pelo aplicativo. Ele não pede acesso a contatos, localização, câmera ou microfone. A permissão SET_ALARM serve para abrir o timer do Android por sua solicitação.
+Não há login próprio, servidor, rastreamento, anúncios ou permissão de internet no diário. Integrações opcionais com calendário e backup usam os provedores do Android após sua autorização. Ele não pede acesso a contatos, localização, câmera ou microfone. A permissão SET_ALARM serve para abrir o timer do Android por sua solicitação.
 
 Os dados locais não têm criptografia adicional implementada pelo app. Dependem das proteções do Android, do bloqueio de tela e da integridade do aparelho. As configurações do app desativam o backup automático do sistema e a transferência automática de dados entre aparelhos.
 
@@ -44,6 +44,16 @@ A preferência claro/escuro/automático é guardada localmente, fora dos registr
 O editor só recebe a foto que você escolhe pelo seletor de arquivos do Android ou navegador. Não solicita câmera nem leitura ampla da galeria. A foto é processada no aparelho para criar um PNG com a logo e o texto opcional escolhido. O original não é modificado. Peso, frequência cardíaca, nomes, agenda e outros registros do diário não são incluídos automaticamente na imagem. A foto selecionada e a composição temporária da página são descartadas ao fechar o editor, e não entram no backup.
 
 Ao salvar no Android, você escolhe o destino pelo seletor do sistema. Ao compartilhar, um PNG temporário fica no cache privado e é entregue ao aplicativo escolhido com autorização temporária somente de leitura. Os arquivos de compartilhamento com mais de 24 horas são removidos ao preparar outra exportação; o sistema também pode limpar o cache. Esse procedimento não remove cópias já salvas ou publicadas. Não há publicação, upload ou envio automático pelo diário. O tratamento da cópia compartilhada passa a seguir as políticas da rede/aplicativo escolhido.
+
+## Backup automático autorizado
+
+A função é desativada por padrão. Cada usuário escolhe explicitamente um arquivo novo, a conta e a pasta pelo seletor de documentos do Android. Ao selecionar Google Drive ou outro provedor em nuvem, esse provedor recebe cópias criptografadas de plano, sessões, peso, atividades, observações e horários; isso pode incluir dados importados do Health Connect. Fotos não entram no backup. O diário mantém autorização persistente somente sobre o arquivo escolhido, sem receber credenciais ou tokens da conta. A conta é gerenciada pelo Android/provedor.
+
+A senha de recuperação não é salva. Uma chave AES de 256 bits não exportável pela API WebCrypto e o salt são guardados no IndexedDB privado do WebView para permitir criptografia automática. Cada cópia usa um nonce aleatório novo de 12 bytes. O arquivo é compatível com o backup manual protegido por AES-GCM/PBKDF2. A chave, o vínculo do destino e as credenciais não entram no arquivo. Os registros principais continuam sem criptografia própria em repouso; a chave local não protege contra acesso ao aplicativo desbloqueado ou comprometimento do aparelho.
+
+A preparação ocorre após alterações salvas no diário aberto. O Android agenda a entrega em segundo plano pelo JobScheduler, com adiamentos e novas tentativas possíveis. Somente a cópia criptografada pendente é utilizada pelo serviço; ele não abre o WebView nem acessa novos dados de saúde em segundo plano. Uma cópia pendente e a última entregue ficam em arquivos privados do aplicativo, excluídos do backup do sistema, enquanto a função estiver ativa. A confirmação de gravação no provedor não comprova o envio ao servidor do Drive; conexão, espaço e upload seguem as condições e políticas dele.
+
+Desativar cancela os trabalhos agendados, libera a autorização persistente e remove chave e cópias privadas. Uma entrega já em andamento pode terminar antes da confirmação de desativação. Importar backup ou apagar os registros executa essa desativação antes de substituir o diário. Arquivos externos não são apagados. Mover/excluir o arquivo ou revogar o acesso pode exigir nova ativação. Não há restauração automática nem mesclagem entre celulares. A restauração manual pede senha e confirmação; use arquivos separados em cada aparelho.
 
 ## Backups manuais
 

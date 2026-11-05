@@ -2,7 +2,7 @@
 
 Diário de natação para Android. Planeje sessões, registre duração e esforço, acompanhe peso e atividades extras e use o timer do aparelho.
 
-Os registros ficam somente no aparelho. O app não tem login, servidor, anúncios, rastreadores, música ou permissão de internet. Nas configurações, é possível salvar um backup, importar registros e preparar um anexo para enviar a si mesmo pelo aplicativo de e-mail escolhido. Nenhum e-mail é enviado automaticamente.
+Os registros são salvos no aparelho. Cópias externas são opcionais. O app não tem login, servidor, anúncios, rastreadores, música ou permissão de internet. Nas configurações, é possível salvar um backup, importar registros e preparar um anexo para enviar a si mesmo pelo aplicativo de e-mail escolhido. Nenhum e-mail é enviado automaticamente.
 
 ## Treinos estruturados
 
@@ -22,6 +22,19 @@ Os backups incluem os campos das séries; backups anteriores continuam aceitos. 
 A proteção por senha vem ativada. Os arquivos protegidos usam AES-256-GCM, com chave de 256 bits derivada por PBKDF2-SHA256 (310.000 iterações), salt aleatório de 16 bytes e nonce de 12 bytes. A senha deve ter ao menos 12 caracteres e não é armazenada. Guarde-a separadamente: não existe recuperação de senha.
 
 O backup sem senha contém dados legíveis. O app de e-mail recebe o arquivo que você escolheu compartilhar; revise o destinatário antes de enviar. Não envie a senha junto com o anexo. Desinstalar o app apaga os dados locais. Faça backups antes de trocar de aparelho.
+
+
+## Backup automático no Drive (opcional)
+
+Em **Configurações → Backup automático no Google Drive**, escolha uma senha de recuperação com pelo menos 12 caracteres e toque em **Ativar e escolher conta/pasta**. No seletor de arquivos do Android, escolha **Google Drive**, a conta e a pasta. O Drive deve estar instalado/configurado e oferecer autorização permanente de leitura/gravação. A função também aceita outros provedores compatíveis; selecionar armazenamento local não cria uma cópia na nuvem. Um arquivo exclusivo é criado para cada ativação. Não é necessário OAuth próprio, servidor ou permissão de internet no diário.
+
+Após salvar alterações com o diário aberto, o app prepara uma cópia criptografada e agenda a entrega em segundo plano. A tentativa é programada com atraso mínimo de um minuto; o Android pode adiá-la por bateria, quotas ou parada forçada. Falhas de entrega mantêm a cópia pendente e recebem novas tentativas com espera progressiva. Reabrir o app recupera o agendamento. **Atualizar backup agora** prepara a versão atual imediatamente para a fila de entrega. Ao fechar o app antes da preparação terminar, pode ser necessário reabri-lo para capturar as últimas alterações.
+
+A criptografia é compatível com **Importar backup**. A senha não é guardada; uma chave AES não exportável pela API WebCrypto e o salt ficam no IndexedDB privado do WebView para permitir novas cópias sem pedir a senha novamente. O salt é fixo por ativação e cada cópia usa um nonce aleatório novo. A chave não entra no arquivo nem no backup do diário. Quem tiver acesso ao app desbloqueado ainda pode acessar os registros locais; a chave não é uma proteção adicional contra comprometimento do aparelho. Guarde a senha separadamente: sem ela, limpar dados ou perder o celular impede recuperar os backups protegidos.
+
+O status **Entregue ao destino** confirma a gravação no provedor, e não o envio à nuvem. A sincronização com o servidor é responsabilidade do Drive/provedor, que pode manter o arquivo em cache quando estiver offline. Confira no Drive antes de desinstalar o app. A cópia pendente e a última entregue ficam no armazenamento privado enquanto a função estiver ativa. Uma falha durante a sobrescrita pode deixar o arquivo externo incompleto; os registros locais e a cópia pendente permanecem para nova tentativa. Mantenha também backups manuais independentes.
+
+**Desativar backup automático** cancela a fila, libera a autorização do arquivo e remove a chave e as cópias privadas. O arquivo externo é preservado. Importar um backup ou apagar o diário desativa a função antes da substituição local, para preservar a cópia externa anterior. Restaurar é manual e pede senha e confirmação; não há leitura automática do conteúdo remoto nem mesclagem entre aparelhos. Use um arquivo diferente em cada celular. Fotografias, vínculos da agenda e preferências de aparência não entram nessa cópia. Conta e pasta são escolhidas no seletor do sistema; o diário não recebe senha ou token da conta Google.
 
 ## Xiaomi e Samsung (importação opcional)
 
@@ -98,3 +111,5 @@ https://tabinformatica.com.br/nadonoseuritmo
 
 Repositório público: https://github.com/eucareca/nado-no-meu-ritmo  
 Problemas e sugestões: https://github.com/eucareca/nado-no-meu-ritmo/issues
+
+Teste do backup automático: `.venv/bin/python tests/test_auto_backup.py` (dados sintéticos e ponte Android simulada).

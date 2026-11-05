@@ -33,6 +33,8 @@ receiver = app.find('receiver')
 if receiver is None or receiver.get(ns+'exported') != 'false': failures.append('Training receiver exposed')
 provider = app.find('provider')
 if provider is None or provider.get(ns+'exported') != 'false': failures.append('Attachment provider exposed')
+service = app.find('service')
+if service is None or service.get(ns+'permission') != 'android.permission.BIND_JOB_SERVICE': failures.append('Backup job service is not protected')
 html = (ROOT/'index.html').read_text()
 for forbidden in ['cdn.jsdelivr.net', 'authScreen', 'googleSignInBtn', 'musicBtn']:
     if forbidden in html: failures.append('Removed feature remains in HTML')

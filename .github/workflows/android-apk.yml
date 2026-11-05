@@ -41,6 +41,7 @@ jobs:
           .venv/bin/python tests/test_training_planner.py
           .venv/bin/python tests/test_calendar_sync.py
           .venv/bin/python tests/test_appearance_photo.py
+          .venv/bin/python tests/test_auto_backup.py
           mkdir -p artifacts/calendar-model
           javac -d artifacts/calendar-model android/app/src/main/java/br/com/tabinformatica/nadonomeritmo/CalendarSyncRules.java tests/CalendarSyncRulesTest.java
           java -cp artifacts/calendar-model br.com.tabinformatica.nadonomeritmo.CalendarSyncRulesTest

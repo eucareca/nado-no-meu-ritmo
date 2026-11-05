@@ -46,6 +46,9 @@ public final class MainActivity extends Activity {
     private File pendingPhotoFile;
     private String pendingPhotoId;
     private static final int SAVE_PHOTO = 12;
+    private static final int SELECT_AUTO_BACKUP = 13;
+    private String autoSelectId;
+    private AutoBackupTransfer autoTransfer;
     private HealthImporter healthImporter;
     private String healthRequestId;
     private static final int HEALTH_PERMISSIONS = 30;
@@ -153,6 +156,7 @@ public final class MainActivity extends Activity {
             if (!(ORIGIN + PREFIX + "index.html").equals(webView.getUrl())) return true;
             if ("appearance".equals(uri.getHost())) applyNativeAppearance(uri.getQueryParameter("theme"));
             else if ("photo".equals(uri.getHost())) handlePhoto(uri);
+            else if ("auto-backup".equals(uri.getHost())) handleAutoBackup(uri);
             else if ("calendar-sync".equals(uri.getHost())) handleCalendarSync(uri);
             else if ("training".equals(uri.getHost())) handleTraining(uri);
             else if ("health".equals(uri.getHost())) handleHealth(uri);
@@ -171,7 +175,7 @@ public final class MainActivity extends Activity {
     private void updateNativeColorScheme(boolean pageReady) {
         if(webView==null)return;
         boolean dark=(getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;
-        String script=(pageReady?"window.nadoNativeReady=true;":"")+"window.setNativeColorScheme && window.setNativeColorScheme("+dark+");"+(pageReady?"window.syncCalendarOnResume && window.syncCalendarOnResume();":"")+"document.documentElement.dataset.theme;";
+        String script=(pageReady?"window.nadoNativeReady=true;window.nadoAutoBackupReady=true;":"")+"window.setNativeColorScheme && window.setNativeColorScheme("+dark+");"+(pageReady?"window.syncCalendarOnResume && window.syncCalendarOnResume();":"")+"document.documentElement.dataset.theme;";
         webView.evaluateJavascript(script,value->{try{Object theme=new JSONTokener(value).nextValue();if(theme instanceof String)applyNativeAppearance((String)theme);}catch(Exception ignored){}});
     }
     private void applyNativeAppearance(String theme) {
@@ -221,6 +225,46 @@ public final class MainActivity extends Activity {
         });
     }
 
+
+    private void autoReply(String id,JSONObject result){
+        runOnUiThread(()->{
+            if(webView==null || !(ORIGIN+PREFIX+"index.html").equals(webView.getUrl()))return;
+            webView.evaluateJavascript("window.receiveAutoBackup && window.receiveAutoBackup("+JSONObject.quote(id)+","+result+");",null);
+        });
+    }
+    private void autoError(String id,String message){
+        JSONObject result=new JSONObject();try{result.put("error",true);result.put("message",message==null?"Não foi possível concluir o backup automático.":message);}catch(Exception ignored){}autoReply(id,result);
+    }
+    private void handleAutoBackup(Uri uri){
+        String id=uri.getQueryParameter("id"),action=uri.getQueryParameter("action");
+        if(id==null || !id.matches("[a-f0-9-]{36}"))return;
+        if("status".equals(action)){autoReply(id,AutoBackupStore.status(this));AutoBackupStore.WORK.execute(()->AutoBackupStore.resume(getApplicationContext()));return;}
+        if("disable".equals(action)){
+            if(autoTransfer!=null)autoTransfer.cancel();
+            AutoBackupStore.WORK.execute(()->{try{AutoBackupStore.disconnect(getApplicationContext());autoReply(id,AutoBackupStore.status(this));}catch(Exception error){autoError(id,error.getMessage());}});return;
+        }
+        if("select".equals(action)){
+            if(autoSelectId!=null || !AutoBackupStore.target(this).isEmpty()){autoError(id,"Conclua ou desative o destino atual antes de escolher outro.");return;}
+            Intent select=new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                .putExtra(Intent.EXTRA_TITLE,"nado-automatico-"+UUID.randomUUID().toString().substring(0,8)+".json");
+            autoSelectId=id;try{startActivityForResult(select,SELECT_AUTO_BACKUP);}catch(RuntimeException error){autoSelectId=null;autoError(id,"Nenhum seletor compatível encontrado. Instale e configure o Drive.");}return;
+        }
+        if("stage".equals(action)){
+            String transfer=uri.getQueryParameter("transfer"),target=uri.getQueryParameter("target");
+            if(transfer==null || !transfer.matches("[a-f0-9-]{36}") || target==null || !target.equals(AutoBackupStore.target(this))){autoError(id,"Destino não autorizado.");return;}
+            int length;try{length=Integer.parseInt(uri.getQueryParameter("length"));}catch(RuntimeException error){autoError(id,"Backup inválido.");return;}
+            if(autoTransfer==null)autoTransfer=new AutoBackupTransfer(webView);
+            autoTransfer.read(transfer,length,new AutoBackupTransfer.Callback(){
+                @Override public void failed(){autoError(id,"Não foi possível preparar a cópia criptografada. Tente atualizar novamente.");}
+                @Override public void ready(String text){AutoBackupStore.WORK.execute(()->{
+                    try{AutoBackupStore.stage(getApplicationContext(),target,text);autoReply(id,AutoBackupStore.status(this));}
+                    catch(Exception error){autoError(id,"Não foi possível guardar a cópia criptografada. Seus registros foram mantidos.");}
+                });}
+            });
+        }
+    }
+
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent); setIntent(intent);
         if (intent.getBooleanExtra("openTraining",false)) openTrainingPanel();
@@ -233,7 +277,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onResume() {
         super.onResume();
-        if(webView!=null && (ORIGIN+PREFIX+"index.html").equals(webView.getUrl())) webView.evaluateJavascript("window.syncCalendarOnResume && window.syncCalendarOnResume();",null);
+        if(webView!=null && (ORIGIN+PREFIX+"index.html").equals(webView.getUrl())) webView.evaluateJavascript("window.syncCalendarOnResume && window.syncCalendarOnResume();setTimeout(function(){window.resumeAutoBackup && window.resumeAutoBackup();},500);",null);
     }
     private void calendarReply(String id,JSONObject result) {
         if(webView==null || !(ORIGIN+PREFIX+"index.html").equals(webView.getUrl()))return;
@@ -415,7 +459,15 @@ public final class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
-        if(request==SAVE_PHOTO){
+        if(request==SELECT_AUTO_BACKUP){
+            String id=autoSelectId;autoSelectId=null;if(id==null)return;
+            if(result!=RESULT_OK || data==null || data.getData()==null){autoError(id,"Escolha de destino cancelada. Backup automático não ativado.");return;}
+            Uri destination=data.getData();int flags=data.getFlags();
+            AutoBackupStore.WORK.execute(()->{
+                try{AutoBackupStore.connect(getApplicationContext(),destination,flags);autoReply(id,AutoBackupStore.status(this));}
+                catch(Exception error){autoError(id,error.getMessage());}
+            });
+        } else if(request==SAVE_PHOTO){
             File file=pendingPhotoFile;String id=pendingPhotoId;pendingPhotoFile=null;pendingPhotoId=null;
             if(file==null || id==null)return;
             if(result!=RESULT_OK || data==null || data.getData()==null){file.delete();photoReply(id,"Salvamento cancelado.");return;}
@@ -464,6 +516,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onDestroy() {
         if(photoExporter!=null)photoExporter.cancel();
+        if(autoTransfer!=null)autoTransfer.cancel();
         if(pendingPhotoFile!=null)pendingPhotoFile.delete();pendingPhotoFile=null;pendingPhotoId=null;
         if (android.os.Build.VERSION.SDK_INT >= 34 && healthImporter != null) healthImporter.cancel();
         if (fileChooser != null) { fileChooser.onReceiveValue(null); fileChooser = null; }

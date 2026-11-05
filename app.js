@@ -48,7 +48,8 @@ function load() {
 }
 
 function save() {
-    localStorage.setItem(activeCacheKey, JSON.stringify(state))
+    localStorage.setItem(activeCacheKey, JSON.stringify(state));
+    document.dispatchEvent(new Event('diarySaved'));
 }
 
 function fmtDate(v) {
