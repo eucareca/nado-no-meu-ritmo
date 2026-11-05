@@ -32,6 +32,7 @@ jobs:
       - name: Verificar fonte e executar testes locais
         run: |
           python3 scripts/audit-source.py
+          python3 tests/test_publish_release.py
           python3 -m venv .venv
           .venv/bin/pip install -r tests/requirements.txt
           .venv/bin/playwright install --with-deps chromium

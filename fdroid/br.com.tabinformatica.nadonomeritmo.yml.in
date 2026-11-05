@@ -1,3 +1,11 @@
+AntiFeatures:
+  NonFreeNet:
+    en-US: Optional Google Calendar integration and the suggested Google Drive destination
+      use proprietary services. The diary works offline and backups support other
+      Android document providers.
+  NonFreeAdd:
+    en-US: Optional swimming imports mention Mi Fitness and Samsung Health, which
+      are proprietary apps. They are not required for the local diary.
 Categories:
   - Sports & Health
 License: Apache-2.0
@@ -10,18 +18,21 @@ IssueTracker: @ISSUES_URL@
 AutoName: Nado no meu ritmo
 Summary: Diário de natação local com backup protegido por senha
 Description: |-
-    Planeje sessões de natação, registre duração e esforço e acompanhe peso e atividades extras.
-    Os dados ficam no aparelho. Não há conta, anúncios, rastreadores ou acesso à internet.
-    Salve ou restaure backups e compartilhe um arquivo pelo seu aplicativo de e-mail.
-    O backup com senha é opcional e vem ativado por padrão.
+  Planeje sessões de natação, registre duração e esforço e acompanhe peso e atividades extras.
+  O diário funciona no aparelho, sem login próprio, anúncios, rastreadores ou permissão de internet.
+  Backups automáticos criptografados são opcionais e usam um arquivo autorizado pelo seletor do Android.
+  Inclui treinos guiados, planejamento semanal, temas claro/escuro e fotos com a marca do app.
+  As integrações opcionais com Agenda Google e Health Connect exigem autorização individual.
+  Salve ou restaure backups e compartilhe um arquivo pelo seu aplicativo de e-mail.
+  O backup com senha é opcional e vem ativado por padrão.
 
 RepoType: git
 Repo: @REPO_URL@
 
 Builds:
-  - versionName: 1.4.0
-    versionCode: 5
-    commit: v1.4.0
+  - versionName: 1.10.0
+    versionCode: 11
+    commit: v1.10.0
     subdir: android
     gradle:
       - yes
@@ -29,5 +40,5 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.4.0
-CurrentVersionCode: 5
+CurrentVersion: 1.10.0
+CurrentVersionCode: 11

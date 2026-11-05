@@ -1,13 +1,13 @@
 # Envio ao F-Droid
 
-Esta árvore contém o código completo da versão local 1.10.0 em preparação (versionCode 11), sob Apache-2.0. Não utiliza servidor, conta, chave de API, SDK proprietário ou permissão de internet. O app abre o timer e o seletor de arquivos/compartilhamento por ação do usuário. O backup automático opcional usa um arquivo autorizado pelo seletor de documentos do Android, chave local não exportável pela WebCrypto e JobScheduler, sem SDK do Drive ou OAuth próprio. O Google Drive não é obrigatório: outros provedores compatíveis ou um arquivo local também podem ser escolhidos. Também pode ler dados locais do Health Connect em Android 14+, mediante permissões opcionais de leitura e confirmação dos registros a importar. Não adiciona SDK proprietário ou dependência de serviços Google para as demais funções.
+Esta árvore contém o código completo da versão 1.10.0 (versionCode 11), sob Apache-2.0. Não utiliza servidor, conta, chave de API, SDK proprietário ou permissão de internet. O app abre o timer e o seletor de arquivos/compartilhamento por ação do usuário. O backup automático opcional usa um arquivo autorizado pelo seletor de documentos do Android, chave local não exportável pela WebCrypto e JobScheduler, sem SDK do Drive ou OAuth próprio. O Google Drive não é obrigatório: outros provedores compatíveis ou um arquivo local também podem ser escolhidos. Também pode ler dados locais do Health Connect em Android 14+, mediante permissões opcionais de leitura e confirmação dos registros a importar. Não adiciona SDK proprietário ou dependência de serviços Google para as demais funções.
 
 ## Repositório e publicação
 
 Repositório público informado e verificado: https://github.com/eucareca/nado-no-meu-ritmo  
 Issues: https://github.com/eucareca/nado-no-meu-ritmo/issues
 
-O fonte da versão 1.4.0 e a tag `v1.4.0` estão publicados. A receita incluída continua apontando para essa versão já existente. A versão 1.10.0 só deve entrar na receita após validação e criação da sua tag. O envio ao F-Droid ainda está pendente. O site do responsável é https://tabinformatica.com.br/nadonoseuritmo.
+A receita referencia a versão 1.10.0 (versionCode 11) na tag `v1.10.0`. A publicação automática cria essa tag somente depois de um build aprovado da branch principal. O pedido para o F-Droid está preparado em `docs/PEDIDO-F-DROID.md`; o envio continua pendente até existir uma issue/MR confirmada no GitLab. O site do responsável é https://tabinformatica.com.br/nadonoseuritmo.
 
 O F-Droid exige fonte público e compila a versão referenciada pela receita; um repositório vazio, um ZIP ou um APK isolado não atende esse requisito. A inclusão depende da revisão dos mantenedores.
 
@@ -24,7 +24,7 @@ python3 scripts/fdroid-metadata.py \
   --output metadata/br.com.tabinformatica.nadonomeritmo.yml
 ```
 
-No checkout de fdroiddata, valide a receita com `fdroid lint br.com.tabinformatica.nadonomeritmo` e `fdroid build --server br.com.tabinformatica.nadonomeritmo:5`. As ferramentas e a infraestrutura do F-Droid podem exigir ajustes de receita. Use uma merge request para adicionar a receita final e siga os comentários dos mantenedores.
+No checkout de fdroiddata, valide a receita com `fdroid lint br.com.tabinformatica.nadonomeritmo` e `fdroid build --server br.com.tabinformatica.nadonomeritmo:11`. As ferramentas e a infraestrutura do F-Droid podem exigir ajustes de receita. Use uma merge request para adicionar a receita final e siga os comentários dos mantenedores.
 
 ## Compilação e assinatura
 
@@ -49,3 +49,7 @@ Referências oficiais:
 - https://f-droid.org/en/docs/Build_Metadata_Reference/
 
 A integração de calendário usa apenas o Calendar Provider do Android e permissões opcionais READ_CALENDAR/WRITE_CALENDAR. A sincronização da conta Google é externa ao diário; o usuário pode negar essa integração e usar as funções locais. Não foi adicionado SDK Google proprietário nem permissão de internet. A compatibilidade final continua dependendo da revisão do F-Droid.
+
+A receita declara NonFreeNet e NonFreeAdd pelas integrações opcionais e sugestões de serviços/aplicativos proprietários. Isso não afirma a inclusão de bibliotecas proprietárias no APK; informa ao usuário sobre serviços externos promovidos. A classificação final depende dos mantenedores.
+
+Preparação da versão 1.10.0: a receita foi normalizada com `fdroid rewritemeta` e passou em `fdroid lint --format` (fdroidserver 2.4.5, nomes de categorias/AntiFeatures do fdroiddata oficial). Isso valida os metadados localmente; a compilação no servidor do F-Droid e a revisão dos mantenedores continuam pendentes.

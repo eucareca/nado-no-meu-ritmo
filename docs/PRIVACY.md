@@ -1,6 +1,6 @@
 # Política de privacidade
 
-Aplicativo: Nado no meu ritmo, versão 1.10.0 em preparação.
+Aplicativo: Nado no meu ritmo, versão 1.10.0.
 Responsável: Tiago Assis Brasil.
 Contato: tiago@tabinformatica.com.br
 Site: https://tabinformatica.com.br/nadonoseuritmo
