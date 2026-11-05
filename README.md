@@ -43,6 +43,16 @@ O botão alternativo **Adicionar evento sem sincronizar** só abre um cadastro n
 
 O painel mostra dias previstos na semana, dias com registro e dias passados ainda sem registro. Uma sessão registrada/importada confirma somente a data informada: não comprova presença na aula agendada. Mais de uma sessão no mesmo dia conta como um dia de frequência. Dias extras aparecem separadamente. Mudanças no plano passam a valer no momento de salvar e preservam as revisões anteriores. O backup inclui esse histórico; restaurar um backup mantém os lembretes desativados até nova ativação no aparelho.
 
+## Tema e fotos para redes sociais
+
+No seletor **Tema**, escolha claro, escuro ou automático. A preferência é salva neste aparelho; automático acompanha o tema do sistema, inclusive no Android. Não faz parte do backup do diário.
+
+Em **Foto para compartilhar**, escolha uma imagem do aparelho, selecione feed 4:5 (1080×1350), quadrado (1080×1080) ou stories 9:16 (1080×1920), moldura clara/escura e texto opcional. A composição preserva o enquadramento completo e aplica a logo existente do aplicativo. O PNG é criado localmente, sem alterar o original ou incluir dados do diário automaticamente.
+
+No Android, **Salvar foto com logo** abre o seletor de destino do sistema; **Compartilhar nas redes** abre o compartilhamento para o usuário escolher o aplicativo e confirmar a publicação. Não exige permissão de acesso amplo à galeria nem câmera. No navegador, salva por download e usa o compartilhamento de arquivos quando suportado, com download como alternativa.
+
+A imagem escolhida permanece apenas na memória do editor, que é limpa ao fechar. Fotos não entram nos backups do diário. O Android prepara um PNG temporário no cache privado para salvar/compartilhar; arquivos temporários de compartilhamento com mais de 24 horas são removidos na próxima exportação. Salvar ou publicar cria uma cópia externa, administrada pelo destino escolhido. Limites: fonte de até 25 MB e 60 megapixels, exportação de até 12 MB; JPEG, PNG e WebP são recomendados. Outros formatos dependem do decodificador do WebView/navegador.
+
 ## Atualização pelo celular
 
 A rotina de compilação no GitHub Actions disponibiliza um APK de teste que instala ao lado do diário principal e um release sem assinatura. Para atualizar o diário principal, é necessária a chave original. Veja [como baixar, testar e preparar a atualização](docs/ATUALIZACAO-ANDROID.md).
@@ -74,6 +84,7 @@ python3 -m venv .venv
 .venv/bin/python tests/test_health_import.py
 .venv/bin/python tests/test_training_planner.py
 .venv/bin/python tests/test_calendar_sync.py
+.venv/bin/python tests/test_appearance_photo.py
 ```
 
 Os testes usam somente dados fictícios e bloqueiam requisições externas. Leia `docs/PRIVACY.md`, `docs/SECURITY.md` e `docs/F-DROID.md` para os limites, permissões e passos de submissão.

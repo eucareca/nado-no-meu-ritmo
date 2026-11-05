@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
 p.add_argument('--output', type=Path, required=True)
 a = p.parse_args(); a.output.mkdir(parents=True, exist_ok=True)
-NAMES = {'.gitignore','LICENSE','NOTICE','README.md','CONTRIBUTING.md','THIRD_PARTY_NOTICES.md','index.html','app.js','health-connect.js','training-planner.js','calendar-sync.js','settings.js','local-store.js','styles.css','manifest.webmanifest','service-worker.js','icon.svg','icon-192.png','icon-512.png'}
+NAMES = {'.gitignore','LICENSE','NOTICE','README.md','CONTRIBUTING.md','THIRD_PARTY_NOTICES.md','index.html','appearance.js','photo-studio.js','app.js','health-connect.js','training-planner.js','calendar-sync.js','settings.js','local-store.js','styles.css','manifest.webmanifest','service-worker.js','icon.svg','icon-192.png','icon-512.png'}
 DIRS = {'.github','android','scripts','tests','docs','fastlane','fdroid'}
 EXCLUDE = {'.git','.gradle','build','.venv','__pycache__','artifacts'}
 files=[]
@@ -22,7 +22,7 @@ for path in sorted(ROOT.rglob('*')):
     if rel.parts[0] not in DIRS and str(rel) not in NAMES: continue
     if path.name == 'local.properties' or path.suffix in {'.apk','.aab','.jks','.keystore','.zip','.log','.pyc'}: continue
     files.append((path,rel))
-prefix='nado-no-meu-ritmo-1.8.0'
+prefix='nado-no-meu-ritmo-1.9.0'
 archive=a.output/(prefix+'-source.zip')
 with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
     for path,rel in files:

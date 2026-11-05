@@ -41,6 +41,11 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> fileChooser;
     private String pendingBackup;
+    private FrameLayout rootLayout;
+    private PhotoExporter photoExporter;
+    private File pendingPhotoFile;
+    private String pendingPhotoId;
+    private static final int SAVE_PHOTO = 12;
     private HealthImporter healthImporter;
     private String healthRequestId;
     private static final int HEALTH_PERMISSIONS = 30;
@@ -56,6 +61,7 @@ public final class MainActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         FrameLayout root = new FrameLayout(this);
+        rootLayout = root;
         root.setBackgroundColor(0xFF071B2A);
         root.setOnApplyWindowInsetsListener((view, insets) -> {
             if (android.os.Build.VERSION.SDK_INT >= 30) {
@@ -78,7 +84,9 @@ public final class MainActivity extends Activity {
         settings.setUserAgentString(settings.getUserAgentString() + " NadoFoss/1");
         webView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
-                if ((ORIGIN+PREFIX+"index.html").equals(url)) webView.evaluateJavascript("window.nadoNativeReady=true; window.syncCalendarOnResume && window.syncCalendarOnResume();",null);
+                if ((ORIGIN+PREFIX+"index.html").equals(url)) {
+                    updateNativeColorScheme(true);
+                }
                 if (getIntent().getBooleanExtra("openTraining",false)) openTrainingPanel();
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -95,7 +103,10 @@ public final class MainActivity extends Activity {
             @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileChooser != null) fileChooser.onReceiveValue(null);
                 fileChooser = callback;
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json");
+                boolean image = false;
+                String[] accepted = params.getAcceptTypes();
+                if (accepted != null) for (String type : accepted) if (type != null && type.startsWith("image/")) image = true;
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(image ? "image/*" : "application/json");
                 try { startActivityForResult(intent, OPEN_BACKUP); }
                 catch (ActivityNotFoundException error) { fileChooser.onReceiveValue(null); fileChooser = null; showMessage(R.string.no_file_app); }
                 return true;
@@ -140,7 +151,9 @@ public final class MainActivity extends Activity {
     private boolean handleNavigation(Uri uri) {
         if ("nado".equals(uri.getScheme())) {
             if (!(ORIGIN + PREFIX + "index.html").equals(webView.getUrl())) return true;
-            if ("calendar-sync".equals(uri.getHost())) handleCalendarSync(uri);
+            if ("appearance".equals(uri.getHost())) applyNativeAppearance(uri.getQueryParameter("theme"));
+            else if ("photo".equals(uri.getHost())) handlePhoto(uri);
+            else if ("calendar-sync".equals(uri.getHost())) handleCalendarSync(uri);
             else if ("training".equals(uri.getHost())) handleTraining(uri);
             else if ("health".equals(uri.getHost())) handleHealth(uri);
             else if ("timer".equals(uri.getHost())) startTimer(uri);
@@ -149,6 +162,63 @@ public final class MainActivity extends Activity {
             return true;
         }
         return !ORIGIN.equals(uri.getScheme() + "://" + uri.getAuthority());
+    }
+
+    @Override public void onConfigurationChanged(android.content.res.Configuration configuration) {
+        super.onConfigurationChanged(configuration);
+        updateNativeColorScheme(false);
+    }
+    private void updateNativeColorScheme(boolean pageReady) {
+        if(webView==null)return;
+        boolean dark=(getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        String script=(pageReady?"window.nadoNativeReady=true;":"")+"window.setNativeColorScheme && window.setNativeColorScheme("+dark+");"+(pageReady?"window.syncCalendarOnResume && window.syncCalendarOnResume();":"")+"document.documentElement.dataset.theme;";
+        webView.evaluateJavascript(script,value->{try{Object theme=new JSONTokener(value).nextValue();if(theme instanceof String)applyNativeAppearance((String)theme);}catch(Exception ignored){}});
+    }
+    private void applyNativeAppearance(String theme) {
+        boolean light="light".equals(theme);if(!light && !"dark".equals(theme))return;
+        int background=light?0xFFF1F7FA:0xFF071B2A;
+        if(rootLayout!=null)rootLayout.setBackgroundColor(background);
+        int flags=getWindow().getDecorView().getSystemUiVisibility();
+        if(light)flags|=android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;else flags&=~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        if(android.os.Build.VERSION.SDK_INT>=26){if(light)flags|=android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;else flags&=~android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;}
+        getWindow().getDecorView().setSystemUiVisibility(flags);
+        getWindow().setNavigationBarColor(background);
+    }
+    private void photoReply(String id,String message) {
+        if(webView==null || !(ORIGIN+PREFIX+"index.html").equals(webView.getUrl()))return;
+        JSONObject payload=new JSONObject();try{payload.put("message",message);}catch(org.json.JSONException ignored){}
+        webView.evaluateJavascript("window.receivePhotoExport && window.receivePhotoExport("+JSONObject.quote(id)+","+payload+");",null);
+    }
+    private void handlePhoto(Uri uri) {
+        String id=uri.getQueryParameter("id"),action=uri.getQueryParameter("action");
+        if(id==null || !id.matches("[a-fA-F0-9-]{36}"))return;
+        if("cancel".equals(action)){
+            if(photoExporter!=null)photoExporter.cancel();
+            if(id.equals(pendingPhotoId)){if(pendingPhotoFile!=null)pendingPhotoFile.delete();pendingPhotoFile=null;pendingPhotoId=null;}
+            return;
+        }
+        if(!"save".equals(action) && !"share".equals(action))return;
+        if(pendingPhotoFile!=null){photoReply(id,"Conclua o salvamento de foto já aberto.");return;}
+        if(photoExporter==null)photoExporter=new PhotoExporter(this,webView);
+        photoExporter.export(id,new PhotoExporter.Callback(){
+            @Override public void failed(){photoReply(id,"Não foi possível preparar a imagem. Tente novamente com outra foto.");}
+            @Override public void ready(File file){
+                if(isFinishing() || isDestroyed()){file.delete();return;}
+                try{
+                    if("save".equals(action)){
+                        pendingPhotoFile=file;pendingPhotoId=id;
+                        Intent save=new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/png").putExtra(Intent.EXTRA_TITLE,"nado-minha-natacao.png");
+                        startActivityForResult(save,SAVE_PHOTO);
+                    }else{
+                        Uri photo=Uri.parse("content://"+getPackageName()+".backup/photo/"+file.getName());
+                        Intent share=new Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM,photo).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        share.setClipData(ClipData.newRawUri("Foto da natação",photo));
+                        startActivity(Intent.createChooser(share,"Compartilhar foto da natação"));
+                        photoReply(id,"Escolha a rede social ou aplicativo e confirme o envio nele. Nada é publicado automaticamente.");
+                    }
+                }catch(RuntimeException error){file.delete();pendingPhotoFile=null;pendingPhotoId=null;photoReply(id,"Nenhum aplicativo compatível foi encontrado para salvar ou compartilhar a imagem.");}
+            }
+        });
     }
 
     @Override protected void onNewIntent(Intent intent) {
@@ -345,7 +415,15 @@ public final class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
-        if (request == OPEN_BACKUP) {
+        if(request==SAVE_PHOTO){
+            File file=pendingPhotoFile;String id=pendingPhotoId;pendingPhotoFile=null;pendingPhotoId=null;
+            if(file==null || id==null)return;
+            if(result!=RESULT_OK || data==null || data.getData()==null){file.delete();photoReply(id,"Salvamento cancelado.");return;}
+            try(InputStream input=new java.io.FileInputStream(file);OutputStream stream=getContentResolver().openOutputStream(data.getData(),"wt")){
+                if(stream==null)throw new java.io.IOException();byte[] buffer=new byte[32768];int count;while((count=input.read(buffer))!=-1)stream.write(buffer,0,count);
+                photoReply(id,"Foto com logo salva no local escolhido. Você pode publicá-la na sua rede social.");
+            }catch(java.io.IOException | SecurityException error){photoReply(id,"Não foi possível salvar a imagem no local escolhido.");}finally{file.delete();}
+        } else if (request == OPEN_BACKUP) {
             if (fileChooser != null) {
                 Uri uri = result == RESULT_OK && data != null ? data.getData() : null;
                 fileChooser.onReceiveValue(uri == null ? null : new Uri[]{uri}); fileChooser = null;
@@ -385,6 +463,8 @@ public final class MainActivity extends Activity {
         super.onStop();
     }
     @Override protected void onDestroy() {
+        if(photoExporter!=null)photoExporter.cancel();
+        if(pendingPhotoFile!=null)pendingPhotoFile.delete();pendingPhotoFile=null;pendingPhotoId=null;
         if (android.os.Build.VERSION.SDK_INT >= 34 && healthImporter != null) healthImporter.cancel();
         if (fileChooser != null) { fileChooser.onReceiveValue(null); fileChooser = null; }
         pendingBackup = null;

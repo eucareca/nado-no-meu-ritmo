@@ -12,3 +12,28 @@ button:disabled{opacity:.6;cursor:wait}
 .training-days{border:1px solid var(--line);border-radius:12px;margin:0 0 18px;padding:12px;display:flex;gap:14px;flex-wrap:wrap}.training-days legend{color:var(--muted);font-size:13px;padding:0 6px}.training-days label{display:flex;align-items:center;gap:6px}.training-days input{width:19px;height:19px;accent-color:var(--aqua)}.training-actions{margin-top:14px}.training-week{display:grid;gap:8px;margin-top:16px}.training-week .wellness-row{flex-wrap:wrap}.training-card .progress{margin-top:18px}.training-card input{min-width:0}
 
 .calendar-sync-box{margin-top:24px;border-top:1px solid var(--line);padding-top:18px}.calendar-sync-box h3{margin:0;font-size:18px}.calendar-sync-box p{overflow-wrap:anywhere}.calendar-sync-box .actions{margin-top:14px}
+
+/* Appearance choices are independent from the exported photo frame. */
+html[data-theme="dark"]{color-scheme:dark}html[data-theme="light"]{color-scheme:light;--bg:#f1f7fa;--panel:#fff;--panel2:#e7f1f6;--line:#c5d9e3;--text:#102c3c;--muted:#456372;--aqua:#00766d;--blue:#195f9e;--gold:#805408;--red:#ad2c2c;--shadow:0 14px 42px #183b4a12}
+.appearance-control select{font:inherit;font-size:13px;font-weight:700;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;max-width:100%}.top-actions{flex-wrap:wrap;max-width:100%}.topbar{flex-wrap:wrap}
+html[data-theme="light"] body{background:radial-gradient(ellipse at 12% -15%,#d5f0ed 0,transparent 45%),linear-gradient(160deg,#f5fafc,#eaf3f8)}
+html[data-theme="light"] :is(.hero-main,.hero-side,.card){background:linear-gradient(145deg,#fff,#f5fafc);border-color:var(--line)}
+html[data-theme="light"] .hero-main:after{border-color:#00766d12;box-shadow:0 0 0 28px #00766d06,0 0 0 56px #00766d04}
+html[data-theme="light"] .btn-primary{color:#fff;background:#00766d}
+html[data-theme="light"] .btn-secondary{background:#e2eff4;border-color:#b7d1df;color:var(--text)}
+html[data-theme="light"] .btn-quiet{border-color:#b7d1df;color:var(--muted)}
+html[data-theme="light"] :is(.step,.metric,.session-row,.wellness-row){background:#f1f7fa;border-color:var(--line)}
+html[data-theme="light"] .step-num{background:#ddf2ec;color:#006a62}
+html[data-theme="light"] .rest-chip{background:#d6e6ee;color:#18394b}
+html[data-theme="light"] .food-note{background:#fff5df;border-color:#e1cfa6;color:#614c21}html[data-theme="light"] .food-note b{color:#65470e}
+html[data-theme="light"] .tag{background:#e0edf4;color:#274d60}
+html[data-theme="light"] .plan-next{background:#eaf7f3;border-color:#bbdcd0;color:#193e38}
+html[data-theme="light"] .plan-next b{color:#006e63}
+html[data-theme="light"] .modal{background:var(--panel);border-color:var(--line)}
+html[data-theme="light"] .field label{color:#2d5060}
+html[data-theme="light"] :is(.field input,.field select,.field textarea,.block-line input,.block-line select){background:#f3f8fb;border-color:#b8d1df;color:var(--text)}
+html[data-theme="light"] .block-line button{background:#e2eef4;color:#31596d}
+html[data-theme="light"] :is(.side-foot,.actual-title,.block-editor){border-color:var(--line)}
+html[data-theme="light"] .chart polyline{stroke:#00766d}html[data-theme="light"] .chart circle{fill:#00766d}
+html[data-theme="light"] :is(.chart-labels,.disclaimer,.delete){color:#4c6a7a}
+.photo-dialog{width:min(760px,calc(100% - 24px));max-height:92vh;overflow:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:22px;padding:24px}.photo-dialog::backdrop{background:#03111ccc}.photo-dialog .modal-head{gap:12px}.photo-dialog h2{margin:0;font-size:22px}.photo-controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}.photo-controls input[type="file"]{font-size:13px;min-width:0}.photo-controls .field{min-width:0}.photo-preview{display:flex;justify-content:center;background:var(--bg);padding:12px;border:1px solid var(--line);border-radius:16px;margin-bottom:18px}.photo-preview canvas{display:block;max-width:100%;width:auto;max-height:55vh;height:auto;object-fit:contain;border-radius:10px}.photo-dialog input,.photo-dialog select{min-width:0}.photo-dialog p{overflow-wrap:anywhere}@media(max-width:480px){.photo-dialog{padding:18px}.photo-controls{grid-template-columns:1fr}.photo-dialog h2{font-size:20px}}

@@ -1,6 +1,6 @@
 # Política de privacidade
 
-Aplicativo: Nado no meu ritmo, versão 1.8.0 em preparação.
+Aplicativo: Nado no meu ritmo, versão 1.9.0 em preparação.
 Responsável: Tiago Assis Brasil.
 Contato: tiago@tabinformatica.com.br
 Site: https://tabinformatica.com.br/nadonoseuritmo
@@ -36,6 +36,14 @@ A leitura e a reconciliação acontecem ao abrir o diário ou por ação do usu�
 Os dados sincronizados são dias da semana, horário, duração e início da série. Alertas externos e lembretes locais são independentes. Conflitos pedem escolha antes de sobrescrever. A exclusão/cancelamento da série externa pausa o plano e os lembretes locais na próxima sincronização; o histórico de sessões realizadas é preservado. Revogar o acesso impede novas consultas e atualizações, mas mantém os dados locais; desconectar remove o vínculo. Desconectar, apagar o diário ou restaurar um backup não exclui eventos Google já criados. Uma nova conexão pode criar uma nova série.
 
 O botão **Adicionar evento sem sincronizar** é uma alternativa que entrega apenas título, início/fim, descrição e repetição ao calendário para revisão e salvamento. Ele não depende das permissões de acesso ao calendário. O `.ics` no navegador é gerado apenas após solicitação.
+
+## Aparência e fotos
+
+A preferência claro/escuro/automático é guardada localmente, fora dos registros e do backup do diário. No modo automático, o aplicativo consulta o tema do sistema; isso não acessa informações de saúde ou conta.
+
+O editor só recebe a foto que você escolhe pelo seletor de arquivos do Android ou navegador. Não solicita câmera nem leitura ampla da galeria. A foto é processada no aparelho para criar um PNG com a logo e o texto opcional escolhido. O original não é modificado. Peso, frequência cardíaca, nomes, agenda e outros registros do diário não são incluídos automaticamente na imagem. A foto selecionada e a composição temporária da página são descartadas ao fechar o editor, e não entram no backup.
+
+Ao salvar no Android, você escolhe o destino pelo seletor do sistema. Ao compartilhar, um PNG temporário fica no cache privado e é entregue ao aplicativo escolhido com autorização temporária somente de leitura. Os arquivos de compartilhamento com mais de 24 horas são removidos ao preparar outra exportação; o sistema também pode limpar o cache. Esse procedimento não remove cópias já salvas ou publicadas. Não há publicação, upload ou envio automático pelo diário. O tratamento da cópia compartilhada passa a seguir as políticas da rede/aplicativo escolhido.
 
 ## Backups manuais
 
