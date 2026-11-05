@@ -1,0 +1,1 @@
+Editable workout examples, repeat/rest intervals, guided timer and session review before saving. Improved plan editing and backup preservation. All features remain local and offline.

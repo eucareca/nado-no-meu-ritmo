@@ -6,7 +6,7 @@
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@drawable/ic_launcher"
-        android:label="Nado no meu ritmo"
+        android:label="${appLabel}"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <activity

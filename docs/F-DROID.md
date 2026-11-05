@@ -1,13 +1,13 @@
 # Envio ao F-Droid
 
-Esta árvore contém o código completo da versão local 1.4.0 (versionCode 5), sob Apache-2.0. Não utiliza servidor, conta, chave de API, SDK proprietário ou permissão de internet. O único acesso externo solicitado pelo app é abrir o timer do sistema ou o seletor de arquivos/compartilhamento por ação do usuário.
+Esta árvore contém o código completo da versão local 1.5.0 em preparação (versionCode 6), sob Apache-2.0. Não utiliza servidor, conta, chave de API, SDK proprietário ou permissão de internet. O único acesso externo solicitado pelo app é abrir o timer do sistema ou o seletor de arquivos/compartilhamento por ação do usuário.
 
 ## Repositório e publicação
 
 Repositório público informado e verificado: https://github.com/eucareca/nado-no-meu-ritmo  
 Issues: https://github.com/eucareca/nado-no-meu-ritmo/issues
 
-O repositório estava vazio na verificação. O envio do fonte e da tag `v1.4.0` ao GitHub continua pendente. A entrega não publica arquivos nem submete uma solicitação ao F-Droid. O site do responsável é https://tabinformatica.com.br/nadonoseuritmo.
+O fonte da versão 1.4.0 e a tag `v1.4.0` estão publicados. A receita incluída continua apontando para essa versão já existente. A versão 1.5.0 só deve entrar na receita após validação e criação da sua tag. O envio ao F-Droid ainda está pendente. O site do responsável é https://tabinformatica.com.br/nadonoseuritmo.
 
 O F-Droid exige fonte público e compila a versão referenciada pela receita; um repositório vazio, um ZIP ou um APK isolado não atende esse requisito. A inclusão depende da revisão dos mantenedores.
 

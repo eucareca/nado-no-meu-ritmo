@@ -23,6 +23,10 @@ A proteção por senha vem ativada. Os arquivos protegidos usam AES-256-GCM, com
 
 O backup sem senha contém dados legíveis. O app de e-mail recebe o arquivo que você escolheu compartilhar; revise o destinatário antes de enviar. Não envie a senha junto com o anexo. Desinstalar o app apaga os dados locais. Faça backups antes de trocar de aparelho.
 
+## Atualização pelo celular
+
+A rotina de compilação no GitHub Actions disponibiliza um APK de teste que instala ao lado do diário principal e um release sem assinatura. Para atualizar o diário principal, é necessária a chave original. Veja [como baixar, testar e preparar a atualização](docs/ATUALIZACAO-ANDROID.md).
+
 ## Compilação
 
 Requisitos: OpenJDK 17, Android SDK Platform 36, Build Tools 35.0.0 e Python 3. A versão do Gradle é fixada em 8.11.1 e o Android Gradle Plugin em 8.9.2. O wrapper verifica o SHA-256 da distribuição.
