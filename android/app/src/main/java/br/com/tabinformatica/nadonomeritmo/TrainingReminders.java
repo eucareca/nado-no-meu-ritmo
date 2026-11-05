@@ -41,6 +41,9 @@ final class TrainingReminders {
         int duration=integer(raw,"durationMinutes",1,240), advance=integer(raw,"reminderMinutes",0,1440);
         JSONObject result=new JSONObject(); result.put("days",days);result.put("time",time);result.put("durationMinutes",duration);result.put("reminderMinutes",advance);
         result.put("enabled",raw.optBoolean("enabled",false));
+        long notBefore=raw.optLong("notBefore",0);
+        if(notBefore<0 || notBefore>32503680000000L)throw new JSONException("Início inválido");
+        if(notBefore>0)result.put("notBefore",notBefore);
         return result;
     }
     private static int integer(JSONObject raw,String key,int min,int max) throws JSONException {
@@ -84,6 +87,7 @@ final class TrainingReminders {
         if(pending!=null) { AlarmManager manager=context.getSystemService(AlarmManager.class);if(manager!=null)manager.cancel(pending);pending.cancel(); }
     }
     static Calendar nextClass(JSONObject config,long after) throws JSONException {
+        after=Math.max(after,config.optLong("notBefore",0)-1);
         String[] time=config.getString("time").split(":");JSONArray days=config.getJSONArray("days");
         for(int offset=0;offset<=8;offset++) {
             Calendar day=Calendar.getInstance();day.setTimeInMillis(after);day.add(Calendar.DATE,offset);

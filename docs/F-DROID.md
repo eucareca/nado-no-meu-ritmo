@@ -1,13 +1,13 @@
 # Envio ao F-Droid
 
-Esta árvore contém o código completo da versão local 1.7.0 em preparação (versionCode 8), sob Apache-2.0. Não utiliza servidor, conta, chave de API, SDK proprietário ou permissão de internet. O app abre o timer e o seletor de arquivos/compartilhamento por ação do usuário. Também pode ler dados locais do Health Connect em Android 14+, mediante permissões opcionais de leitura e confirmação dos registros a importar. Não adiciona SDK proprietário ou dependência de serviços Google para as demais funções.
+Esta árvore contém o código completo da versão local 1.8.0 em preparação (versionCode 9), sob Apache-2.0. Não utiliza servidor, conta, chave de API, SDK proprietário ou permissão de internet. O app abre o timer e o seletor de arquivos/compartilhamento por ação do usuário. Também pode ler dados locais do Health Connect em Android 14+, mediante permissões opcionais de leitura e confirmação dos registros a importar. Não adiciona SDK proprietário ou dependência de serviços Google para as demais funções.
 
 ## Repositório e publicação
 
 Repositório público informado e verificado: https://github.com/eucareca/nado-no-meu-ritmo  
 Issues: https://github.com/eucareca/nado-no-meu-ritmo/issues
 
-O fonte da versão 1.4.0 e a tag `v1.4.0` estão publicados. A receita incluída continua apontando para essa versão já existente. A versão 1.7.0 só deve entrar na receita após validação e criação da sua tag. O envio ao F-Droid ainda está pendente. O site do responsável é https://tabinformatica.com.br/nadonoseuritmo.
+O fonte da versão 1.4.0 e a tag `v1.4.0` estão publicados. A receita incluída continua apontando para essa versão já existente. A versão 1.8.0 só deve entrar na receita após validação e criação da sua tag. O envio ao F-Droid ainda está pendente. O site do responsável é https://tabinformatica.com.br/nadonoseuritmo.
 
 O F-Droid exige fonte público e compila a versão referenciada pela receita; um repositório vazio, um ZIP ou um APK isolado não atende esse requisito. A inclusão depende da revisão dos mantenedores.
 
@@ -47,3 +47,5 @@ Referências oficiais:
 - https://f-droid.org/en/docs/Inclusion_Policy/
 - https://f-droid.org/en/docs/Submitting_to_F-Droid_Quick_Start_Guide/
 - https://f-droid.org/en/docs/Build_Metadata_Reference/
+
+A integração de calendário usa apenas o Calendar Provider do Android e permissões opcionais READ_CALENDAR/WRITE_CALENDAR. A sincronização da conta Google é externa ao diário; o usuário pode negar essa integração e usar as funções locais. Não foi adicionado SDK Google proprietário nem permissão de internet. A compatibilidade final continua dependendo da revisão do F-Droid.

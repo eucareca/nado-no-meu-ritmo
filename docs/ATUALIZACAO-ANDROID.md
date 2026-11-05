@@ -1,6 +1,6 @@
 # Instalação e atualização sem cabo USB
 
-A versão 1.7.0 está em preparação. A rotina `Compilar APK Android` compila e verifica os APKs no GitHub Actions, em cada push para `main` ou `feat/treinos-guiados`, em pull requests para `main` e por execução manual após a rotina estar na branch padrão.
+A versão 1.8.0 está em preparação. A rotina `Compilar APK Android` compila e verifica os APKs no GitHub Actions, em cada push para `main` ou `feat/treinos-guiados`, em pull requests para `main` e por execução manual após a rotina estar na branch padrão.
 
 ## Baixar e experimentar
 
@@ -16,7 +16,7 @@ O pacote fica disponível por 30 dias. A rotina não publica automaticamente uma
 
 ## Atualizar o diário principal
 
-Para instalar uma atualização por cima e preservar os registros, é necessário manter o identificador `br.com.tabinformatica.nadonomeritmo`, usar um versionCode maior e assinar com a mesma chave da instalação existente. A versão 1.7.0 usa versionCode 8; a versão 1.4.0 usa 5.
+Para instalar uma atualização por cima e preservar os registros, é necessário manter o identificador `br.com.tabinformatica.nadonomeritmo`, usar um versionCode maior e assinar com a mesma chave da instalação existente. A versão 1.8.0 usa versionCode 9; a versão 1.4.0 usa 5.
 
 **nado-release-unsigned.apk não pode ser instalado diretamente.** Ele deve ser assinado com a chave original, fora do repositório. Não envie a chave nem a senha por chat, issues ou commits. Identifique a chave no computador que gerou o APK instalado. Se a versão instalada for de depuração, a chave geralmente está em `~/.android/debug.keystore` no computador de origem. Se for release, use o keystore escolhido no build original. Não gere uma chave nova para tentar atualizar uma instalação existente.
 

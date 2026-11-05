@@ -1,6 +1,6 @@
 # Política de privacidade
 
-Aplicativo: Nado no meu ritmo, versão 1.7.0 em preparação.
+Aplicativo: Nado no meu ritmo, versão 1.8.0 em preparação.
 Responsável: Tiago Assis Brasil.
 Contato: tiago@tabinformatica.com.br
 Site: https://tabinformatica.com.br/nadonoseuritmo
@@ -29,7 +29,13 @@ O plano de dias e horários e seu histórico de alterações ficam no diário e 
 
 Desativar lembretes cancela os alarmes locais. Apagar o diário ou importar um backup também desativa a configuração nativa; após restaurar, é necessário reativar os lembretes explicitamente. Isso não apaga eventos já salvos em outros calendários. Os avisos seguem as restrições de bateria e permissões do Android.
 
-Adicionar à Agenda Google entrega um título genérico de natação, início/fim, descrição e repetição semanal ao aplicativo de calendário escolhido. Você escolhe a conta e confirma o salvamento nele. O calendário passa a tratar esses dados segundo suas políticas, inclusive sua eventual sincronização em nuvem. O diário não pede acesso à conta Google nem permissões READ_CALENDAR ou WRITE_CALENDAR. Eventos externos não são lidos para confirmar presença. No navegador, o arquivo `.ics` só é gerado após sua solicitação.
+**Conectar Agenda Google** é opcional e solicita READ_CALENDAR e WRITE_CALENDAR. Essas permissões do Android dão acesso amplo ao Calendar Provider; o diário restringe seu uso à lista de nomes/contas de agendas Google editáveis e à série que ele próprio criou e vinculou, incluindo a verificação de exceções dessa série. Nenhum outro compromisso é gerenciado. A agenda é escolhida explicitamente no aparelho, e a seleção cria uma série de natação. O título é genérico e não inclui peso, frequência cardíaca ou observações de saúde. O vínculo, identificador de origem e referências de versões ficam nas preferências privadas do aplicativo e não entram nos backups exportados.
+
+A leitura e a reconciliação acontecem ao abrir o diário ou por ação do usuário. O serviço de sincronização da conta Google do Android é responsável pelo intercâmbio com o Google, sob as políticas dessa conta. O diário continua sem permissão de internet e não recebe senha, token OAuth ou credenciais da conta. Por isso não há login próprio nem servidor do diário para essa integração. Cada usuário decide autorizar ou negar, independentemente do responsável pelo projeto.
+
+Os dados sincronizados são dias da semana, horário, duração e início da série. Alertas externos e lembretes locais são independentes. Conflitos pedem escolha antes de sobrescrever. A exclusão/cancelamento da série externa pausa o plano e os lembretes locais na próxima sincronização; o histórico de sessões realizadas é preservado. Revogar o acesso impede novas consultas e atualizações, mas mantém os dados locais; desconectar remove o vínculo. Desconectar, apagar o diário ou restaurar um backup não exclui eventos Google já criados. Uma nova conexão pode criar uma nova série.
+
+O botão **Adicionar evento sem sincronizar** é uma alternativa que entrega apenas título, início/fim, descrição e repetição ao calendário para revisão e salvamento. Ele não depende das permissões de acesso ao calendário. O `.ics` no navegador é gerado apenas após solicitação.
 
 ## Backups manuais
 

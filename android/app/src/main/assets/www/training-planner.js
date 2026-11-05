@@ -16,7 +16,7 @@ function trainingSlots(schedule, start, end) {
             if (!period.days.includes(day.getDay())) continue;
             const [hour,minute] = period.time.split(':').map(Number);
             const date = new Date(day.getFullYear(),day.getMonth(),day.getDate(),hour,minute);
-            if (date < start || date >= end || trainingPeriodAt(schedule,date) !== period) continue;
+            if (date < start || date >= end || trainingPeriodAt(schedule,date) !== period || (period.startsAt && date.getTime()<Date.parse(period.startsAt))) continue;
             slots.push({date:localDay(date), start:date.getTime(), end:date.getTime()+period.durationMinutes*60000, time:period.time});
         }
     }
@@ -65,6 +65,7 @@ async function saveTrainingPlan(event) {
     try {
         const current = state.trainingSchedule || {revisions:[],remindersEnabled:false};
         const candidate = {...trainingFormValue(),effectiveAt:new Date().toISOString()};
+        if(!candidate.days.length) throw new Error('Escolha pelo menos um dia válido da semana.');
         const previous = current.revisions.at(-1);
         const key = period => JSON.stringify([[...period.days].sort((a,b)=>a-b),period.time,period.durationMinutes,period.reminderMinutes]);
         const changed = !previous || key(previous)!==key(candidate);
@@ -76,12 +77,13 @@ async function saveTrainingPlan(event) {
         await persistPlan(); trainingDirty=false; renderTrainingAttendance();
         trainingMessage('Dias e horários salvos. As alterações valem a partir de agora e preservam os planos anteriores no acompanhamento.');
         if(next.remindersEnabled) sendTrainingNative('apply');
+        if(window.sendCalendarSync && calendarSyncConnected) sendCalendarSync('sync',true);
     } catch(error) { state.trainingSchedule=before; trainingMessage('Não foi possível salvar: '+error.message); }
 }
 function trainingNativePayload(enabled) {
     const period = state.trainingSchedule?.revisions?.at(-1);
-    if (!period) throw new Error('Salve os dias e horários primeiro.');
-    return {...period,enabled};
+    if (!period || !period.days.length) throw new Error('Escolha e salve os dias e horários primeiro.');
+    return {...period,enabled,notBefore:period.startsAt?Date.parse(period.startsAt):0};
 }
 function sendTrainingNative(action) {
     if (trainingDirty && action!=='disable' && action!=='status') return trainingMessage('Salve as alterações dos dias e horários antes de continuar.');
@@ -106,7 +108,8 @@ window.receiveTrainingResult = async (id,result) => {
 };
 window.resetTrainingNative = () => {
     trainingPending=null;clearTimeout(trainingTimeout);
-    if(isAndroidApp()) window.location.href='nado://training?action=disable&id='+crypto.randomUUID();
+    if(isAndroidApp() && window.nadoNativeReady) window.location.href='nado://training?action=disable&id='+crypto.randomUUID();
+    if(window.resetCalendarSync) window.resetCalendarSync();
     loadTrainingForm();renderTrainingAttendance();
     trainingMessage('Lembretes desativados. Para reativá-los após restaurar o backup, use o botão Ativar lembretes.');
 };

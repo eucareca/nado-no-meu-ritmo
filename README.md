@@ -35,7 +35,11 @@ A duração importada corresponde ao intervalo início/fim, arredondado em minut
 
 Em **Dias de natação e frequência**, escolha os dias, horário, duração e antecedência do aviso. Salvar o plano não ativa notificações nem cria eventos externos. **Ativar lembretes** solicita permissão no Android 13+ e programa avisos locais. **Testar notificação**, **Consultar lembretes** e **Desativar lembretes** permitem conferir e controlar os avisos. O Android pode atrasar alarmes por economia de bateria; não há promessa de precisão de minuto. O aplicativo tenta reprogramar os avisos após reiniciar o aparelho, mudar o fuso/horário ou atualizar o pacote. Forçar a parada do aplicativo pode impedir avisos até que ele seja aberto novamente.
 
-**Adicionar à Agenda Google** abre um evento semanal recorrente para revisão e salvamento na conta escolhida; se o Google Calendar não estiver instalado, abre um calendário compatível. O diário não recebe acesso à conta nem permissão de leitura/escrita da agenda. Não é sincronização bidirecional: editar ou excluir o evento externo não muda os lembretes ou o plano do diário. Enviar novamente pode duplicar o evento. No navegador, o mesmo planejamento pode ser baixado como arquivo `.ics`.
+**Conectar Agenda Google** solicita acesso ao calendário no Android e permite escolher uma agenda Google editável já cadastrada no aparelho. Ao selecionar a agenda, o diário cria e vincula uma série semanal própria. Dias, horário e duração dessa série são sincronizados ao abrir o diário ou tocar em **Sincronizar agora**. Alterações no diário atualizam a série vinculada; alterações da série no Google, quando recebidas pelo calendário do Android, viram uma nova revisão no diário. Se os dois lados mudarem, o usuário escolhe qual manter. Os alertas da agenda e os lembretes locais são independentes.
+
+A sincronização usa o Calendar Provider do Android e a sincronização da conta Google configurada no aparelho, sem OAuth próprio, backend, SDK adicional ou custo de serviço do diário. Não é instantânea e não roda em segundo plano no diário. Excluir/cancelar a série na agenda pausa o planejamento e desativa lembretes locais na próxima sincronização. Desconectar, apagar o diário ou restaurar um backup remove o vínculo local sem apagar eventos externos. A conexão não entra no backup; reconectar cria uma nova série. A primeira versão aceita apenas séries semanais simples com dias definidos, duração em minutos, fuso equivalente ao aparelho e sem exceções ou data de término. Padrões não suportados são informados sem sobrescrever o evento.
+
+O botão alternativo **Adicionar evento sem sincronizar** só abre um cadastro na agenda para confirmação, sem conceder acesso ao Calendar Provider. No navegador, o planejamento pode ser baixado como `.ics`. Esses eventos independentes não são reconhecidos pela conexão automática e podem duplicar uma série já existente.
 
 O painel mostra dias previstos na semana, dias com registro e dias passados ainda sem registro. Uma sessão registrada/importada confirma somente a data informada: não comprova presença na aula agendada. Mais de uma sessão no mesmo dia conta como um dia de frequência. Dias extras aparecem separadamente. Mudanças no plano passam a valer no momento de salvar e preservam as revisões anteriores. O backup inclui esse histórico; restaurar um backup mantém os lembretes desativados até nova ativação no aparelho.
 
@@ -69,6 +73,7 @@ python3 -m venv .venv
 .venv/bin/python tests/test_workouts.py
 .venv/bin/python tests/test_health_import.py
 .venv/bin/python tests/test_training_planner.py
+.venv/bin/python tests/test_calendar_sync.py
 ```
 
 Os testes usam somente dados fictícios e bloqueiam requisições externas. Leia `docs/PRIVACY.md`, `docs/SECURITY.md` e `docs/F-DROID.md` para os limites, permissões e passos de submissão.

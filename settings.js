@@ -60,7 +60,7 @@ function validateTrainingSchedule(raw, restore = false) {
     if (typeof raw !== 'object' || !Array.isArray(raw.revisions) || raw.revisions.length < 1 || raw.revisions.length > 256) throw new Error('O plano de horários deve ter de 1 a 256 revisões.');
     let previous = 0;
     const revisions = raw.revisions.map(period => {
-        if (!period || !Array.isArray(period.days) || !period.days.length || period.days.length > 7 || period.days.some(day=>!Number.isInteger(day)||day<0||day>6) || new Set(period.days).size!==period.days.length) throw new Error('Escolha pelo menos um dia válido da semana.');
+        if (!period || !Array.isArray(period.days) || period.days.length > 7 || period.days.some(day=>!Number.isInteger(day)||day<0||day>6) || new Set(period.days).size!==period.days.length) throw new Error('Escolha pelo menos um dia válido da semana.');
         if (typeof period.time !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(period.time)) throw new Error('Informe um horário válido.');
         if (typeof period.effectiveAt !== 'string' || period.effectiveAt.length>40 || !Number.isFinite(Date.parse(period.effectiveAt))) throw new Error('Data do plano inválida.');
         const instant = Date.parse(period.effectiveAt);
@@ -68,7 +68,12 @@ function validateTrainingSchedule(raw, restore = false) {
         previous = instant;
         const durationMinutes=backupNumber(period.durationMinutes,1,240), reminderMinutes=backupNumber(period.reminderMinutes,0,1440);
         if (!Number.isInteger(durationMinutes)||!Number.isInteger(reminderMinutes)) throw new Error('Use minutos inteiros no planejamento.');
-        return {days:[...period.days].sort((a,b)=>a-b),time:period.time,durationMinutes,reminderMinutes,effectiveAt:new Date(instant).toISOString()};
+        let startsAt = null;
+        if (period.startsAt != null) {
+            if (typeof period.startsAt !== 'string' || period.startsAt.length>40 || !Number.isFinite(Date.parse(period.startsAt))) throw new Error('Início da série inválido.');
+            startsAt = new Date(period.startsAt).toISOString();
+        }
+        return {days:[...period.days].sort((a,b)=>a-b),time:period.time,durationMinutes,reminderMinutes,effectiveAt:new Date(instant).toISOString(),...(startsAt ? {startsAt} : {})};
     });
     return {revisions,remindersEnabled:!restore && raw.remindersEnabled === true};
 }
@@ -195,6 +200,7 @@ async function importDiary(file) {
         if (raw.encrypted) { password = await passwordForImport(); if (password === null) return; }
         const diary = await decodeDiary(raw, password);
         if (!confirm('Importar este backup vai substituir os registros locais. Deseja continuar?')) return;
+        if(window.resetCalendarSync)window.resetCalendarSync();
         const db = diaryRecords(diary);
         // Replace the full diary atomically after validation, decryption, and confirmation.
         localStorage.setItem(RECORDS_KEY, JSON.stringify(db));
@@ -217,7 +223,7 @@ function setupSettings() {
       <p class="sub">A senha não é guardada. Sem ela, um backup protegido não pode ser recuperado. Não envie a senha junto com o arquivo.</p>
       <div class="actions"><button id="saveBackup" class="btn btn-primary">Salvar backup</button><button id="emailBackup" class="btn btn-secondary">Enviar backup por e-mail</button><button id="restoreBackup" class="btn btn-secondary">Importar backup</button></div>
       <p id="settingsMessage" role="status" aria-live="polite"></p></section>
-      <section class="card"><h2>Privacidade</h2><p>Este aplicativo não tem login, anúncios, rastreadores nem envio automático de dados para servidores. Não tem permissão de internet no Android. A importação opcional por Health Connect (Android 14+) lê exercícios, distância e frequência cardíaca média, após sua autorização e seleção. Ela não altera dados de outros aplicativos. Sessões, peso, atividades e plano ficam no armazenamento privado do aplicativo, sem criptografia própria em repouso. A proteção do aparelho e do bloqueio de tela é importante.</p><p>Ao compartilhar um backup, somente o arquivo e o e-mail informado são entregues ao aplicativo que você escolher. Ele passa a ser responsável pelo envio e pelo tratamento desses dados. O Nado no meu ritmo nunca envia mensagens automaticamente.</p><p>Os backups automáticos do sistema e a transferência automática entre aparelhos estão desativados. O backup manual pode ser criptografado com AES-256-GCM e uma senha escolhida por você.</p><p>Suporte: Tiago Assis Brasil · tiago@tabinformatica.com.br<br>tabinformatica.com.br/nadonoseuritmo<br>Licença Apache-2.0 · versão 1.7.0</p></section>
+      <section class="card"><h2>Privacidade</h2><p>Este aplicativo não tem login, anúncios, rastreadores nem envio automático de dados para servidores. Não tem permissão de internet no Android. A importação opcional por Health Connect (Android 14+) lê exercícios, distância e frequência cardíaca média, após sua autorização e seleção. Ela não altera dados de outros aplicativos. A sincronização opcional de uma série de natação solicita acesso ao calendário do Android; cada usuário escolhe a agenda Google. O diário limita as alterações à série que criou e vinculou. A conta Google do Android cuida da eventual sincronização em nuvem. Sessões, peso, atividades e plano ficam no armazenamento privado do aplicativo, sem criptografia própria em repouso. A proteção do aparelho e do bloqueio de tela é importante.</p><p>Ao compartilhar um backup, somente o arquivo e o e-mail informado são entregues ao aplicativo que você escolher. Ele passa a ser responsável pelo envio e pelo tratamento desses dados. O Nado no meu ritmo nunca envia mensagens automaticamente.</p><p>Os backups automáticos do sistema e a transferência automática entre aparelhos estão desativados. O backup manual pode ser criptografado com AES-256-GCM e uma senha escolhida por você.</p><p>Suporte: Tiago Assis Brasil · tiago@tabinformatica.com.br<br>tabinformatica.com.br/nadonoseuritmo<br>Licença Apache-2.0 · versão 1.8.0</p></section>
       <section class="card"><h2>Apagar registros locais</h2><p>Esta ação não apaga arquivos já exportados, e-mails ou anexos enviados.</p><button id="eraseDiary" class="btn btn-secondary">Apagar todos os registros deste aparelho</button></section></div>`;
     document.body.append(page);
     document.getElementById('backupEmail').value = localStorage.getItem(EMAIL_KEY) || '';
@@ -231,6 +237,7 @@ function setupSettings() {
     document.getElementById('protectBackup').onchange = event => { document.getElementById('backupPassword').disabled = !event.target.checked; };
     document.getElementById('eraseDiary').onclick = async () => {
         if (!confirm('Apagar todos os registros locais? Faça um backup antes de continuar.')) return;
+        if(window.resetCalendarSync)window.resetCalendarSync();
         localStorage.removeItem(RECORDS_KEY); localStorage.removeItem(activeCacheKey); localStorage.removeItem(EMAIL_KEY); localStorage.removeItem('nadoMeuRitmo.v1');
         document.getElementById('backupEmail').value = ''; document.getElementById('backupPassword').value = '';
         resetWorkout(); sessionWorkout = null;

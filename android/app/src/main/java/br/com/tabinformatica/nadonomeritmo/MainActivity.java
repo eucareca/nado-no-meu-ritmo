@@ -48,6 +48,10 @@ public final class MainActivity extends Activity {
     private String pendingTrainingId;
     private String pendingTrainingAction;
     private JSONObject pendingTrainingConfig;
+    private static final int CALENDAR_PERMISSION = 32;
+    private String pendingCalendarId;
+    private String pendingCalendarAction;
+    private JSONObject pendingCalendarConfig;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -74,6 +78,7 @@ public final class MainActivity extends Activity {
         settings.setUserAgentString(settings.getUserAgentString() + " NadoFoss/1");
         webView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
+                if ((ORIGIN+PREFIX+"index.html").equals(url)) webView.evaluateJavascript("window.nadoNativeReady=true; window.syncCalendarOnResume && window.syncCalendarOnResume();",null);
                 if (getIntent().getBooleanExtra("openTraining",false)) openTrainingPanel();
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -135,7 +140,8 @@ public final class MainActivity extends Activity {
     private boolean handleNavigation(Uri uri) {
         if ("nado".equals(uri.getScheme())) {
             if (!(ORIGIN + PREFIX + "index.html").equals(webView.getUrl())) return true;
-            if ("training".equals(uri.getHost())) handleTraining(uri);
+            if ("calendar-sync".equals(uri.getHost())) handleCalendarSync(uri);
+            else if ("training".equals(uri.getHost())) handleTraining(uri);
             else if ("health".equals(uri.getHost())) handleHealth(uri);
             else if ("timer".equals(uri.getHost())) startTimer(uri);
             else if ("save-backup".equals(uri.getHost())) exportBackup(false);
@@ -155,6 +161,43 @@ public final class MainActivity extends Activity {
             getIntent().removeExtra("openTraining");
         }
     }
+    @Override protected void onResume() {
+        super.onResume();
+        if(webView!=null && (ORIGIN+PREFIX+"index.html").equals(webView.getUrl())) webView.evaluateJavascript("window.syncCalendarOnResume && window.syncCalendarOnResume();",null);
+    }
+    private void calendarReply(String id,JSONObject result) {
+        if(webView==null || !(ORIGIN+PREFIX+"index.html").equals(webView.getUrl()))return;
+        webView.evaluateJavascript("window.receiveCalendarSync && window.receiveCalendarSync("+JSONObject.quote(id)+","+result+");",null);
+    }
+    private void calendarMessage(String id,String state,String message) {
+        JSONObject result=new JSONObject();try{result.put("state",state);result.put("message",message);}catch(org.json.JSONException ignored){}
+        calendarReply(id,result);
+    }
+    private void handleCalendarSync(Uri uri) {
+        String id=uri.getQueryParameter("id"),action=uri.getQueryParameter("action");
+        if(id==null || !id.matches("[a-zA-Z0-9-]{1,64}"))return;
+        if("disconnect".equals(action)){CalendarSync.unlink(this);calendarMessage(id,"disconnected","Agenda desconectada. A série externa foi mantida e não será mais atualizada pelo diário.");return;}
+        if("status".equals(action)) {
+            JSONObject result=new JSONObject();try{result.put("state","status");result.put("connected",CalendarSync.connected(this));result.put("granted",CalendarSync.granted(this));
+                result.put("message",CalendarSync.connected(this)?(CalendarSync.granted(this)?"Agenda conectada. Conferindo alterações…":"Agenda conectada, mas o acesso foi revogado. Toque em Sincronizar para autorizar novamente."):"Agenda desconectada. Conecte somente se desejar criar e sincronizar uma série de natação.");}catch(org.json.JSONException ignored){}
+            calendarReply(id,result);return;
+        }
+        if(!java.util.Arrays.asList("connect","sync","push","pull","ack").contains(action))return;
+        try{
+            JSONObject config=new JSONObject(uri.getQueryParameter("data"));
+            if(!CalendarSync.granted(this)) {
+                if(pendingCalendarId!=null){calendarMessage(id,"error","Conclua a autorização de calendário já aberta.");return;}
+                pendingCalendarId=id;pendingCalendarAction=action;pendingCalendarConfig=config;
+                requestPermissions(new String[]{android.Manifest.permission.READ_CALENDAR,android.Manifest.permission.WRITE_CALENDAR},CALENDAR_PERMISSION);
+            }else finishCalendarAction(id,action,config);
+        }catch(RuntimeException | org.json.JSONException error){calendarMessage(id,"error","Não foi possível abrir a sincronização. Confira seu planejamento e tente novamente.");}
+    }
+    private void finishCalendarAction(String id,String action,JSONObject config) {
+        if(!CalendarSync.granted(this)){calendarMessage(id,"error","Acesso ao calendário não autorizado. As outras funções do diário continuam disponíveis.");return;}
+        CalendarSync.Reply reply=result->calendarReply(id,result);
+        if("connect".equals(action))CalendarSync.connect(this,config,reply);else CalendarSync.sync(this,config,action,reply);
+    }
+
     private void trainingReply(String id,String message,Boolean enabled) {
         if (webView==null || !(ORIGIN+PREFIX+"index.html").equals(webView.getUrl())) return;
         JSONObject result=new JSONObject();
@@ -241,6 +284,11 @@ public final class MainActivity extends Activity {
     }
     @Override public void onRequestPermissionsResult(int code, String[] permissions, int[] grants) {
         super.onRequestPermissionsResult(code, permissions, grants);
+        if(code==CALENDAR_PERMISSION && pendingCalendarId!=null){
+            String id=pendingCalendarId,action=pendingCalendarAction;JSONObject config=pendingCalendarConfig;
+            pendingCalendarId=null;pendingCalendarAction=null;pendingCalendarConfig=null;
+            finishCalendarAction(id,action,config);
+        }
         if (code==TRAINING_NOTIFICATION_PERMISSION && pendingTrainingId!=null) {
             String id=pendingTrainingId, action=pendingTrainingAction;JSONObject config=pendingTrainingConfig;
             pendingTrainingId=null;pendingTrainingAction=null;pendingTrainingConfig=null;

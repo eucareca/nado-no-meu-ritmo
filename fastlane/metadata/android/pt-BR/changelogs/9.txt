@@ -1,0 +1,1 @@
+Sincronização opcional de uma série de natação com agenda Google do Android. Cada usuário autoriza e escolhe a agenda. Atualização nos dois sentidos ao abrir o diário ou sincronizar, resolução de conflitos, desconexão e histórico preservado.
