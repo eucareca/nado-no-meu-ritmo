@@ -24,8 +24,10 @@ for path in sorted(ROOT.rglob('*')):
 manifest = ET.parse(ROOT/'android/app/src/main/AndroidManifest.xml')
 ns = '{http://schemas.android.com/apk/res/android}'
 permissions = {node.get(ns+'name') for node in manifest.findall('uses-permission')}
-if permissions != {'com.android.alarm.permission.SET_ALARM'}: failures.append('Unexpected Android permissions')
+if permissions != {'com.android.alarm.permission.SET_ALARM', 'android.permission.health.READ_EXERCISE', 'android.permission.health.READ_DISTANCE', 'android.permission.health.READ_HEART_RATE'}: failures.append('Unexpected Android permissions')
 app = manifest.find('application')
+alias = app.find('activity-alias')
+if alias is None or alias.get(ns+'permission') != 'android.permission.START_VIEW_PERMISSION_USAGE': failures.append('Health privacy entry point is not protected')
 if app.get(ns+'allowBackup') != 'false': failures.append('Automatic backup enabled')
 provider = app.find('provider')
 if provider is None or provider.get(ns+'exported') != 'false': failures.append('Attachment provider exposed')

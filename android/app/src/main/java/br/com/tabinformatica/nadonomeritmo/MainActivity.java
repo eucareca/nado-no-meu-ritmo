@@ -41,6 +41,9 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> fileChooser;
     private String pendingBackup;
+    private HealthImporter healthImporter;
+    private String healthRequestId;
+    private static final int HEALTH_PERMISSIONS = 30;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -123,12 +126,64 @@ public final class MainActivity extends Activity {
 
     private boolean handleNavigation(Uri uri) {
         if ("nado".equals(uri.getScheme())) {
-            if ("timer".equals(uri.getHost())) startTimer(uri);
+            if (!(ORIGIN + PREFIX + "index.html").equals(webView.getUrl())) return true;
+            if ("health".equals(uri.getHost())) handleHealth(uri);
+            else if ("timer".equals(uri.getHost())) startTimer(uri);
             else if ("save-backup".equals(uri.getHost())) exportBackup(false);
             else if ("share-backup".equals(uri.getHost())) exportBackup(true);
             return true;
         }
         return !ORIGIN.equals(uri.getScheme() + "://" + uri.getAuthority());
+    }
+
+    private void healthReply(String id, JSONObject payload) {
+        if (webView == null || !(ORIGIN + PREFIX + "index.html").equals(webView.getUrl())) return;
+        webView.evaluateJavascript("window.receiveHealthConnect && window.receiveHealthConnect(" + JSONObject.quote(id) + "," + payload.toString() + ");", null);
+    }
+    private void healthMessage(String id, String message) {
+        JSONObject payload = new JSONObject();
+        try { payload.put("error", message); } catch (org.json.JSONException ignored) { }
+        healthReply(id, payload);
+    }
+    private void handleHealth(Uri uri) {
+        String id = uri.getQueryParameter("id");
+        if (id == null || !id.matches("[a-zA-Z0-9-]{1,64}")) return;
+        if (android.os.Build.VERSION.SDK_INT < 34) {
+            healthMessage(id, "Esta importação requer Android 14 ou superior com Health Connect disponível. O diário continua funcionando normalmente.");
+            return;
+        }
+        handleHealth34(uri, id);
+    }
+    @android.annotation.TargetApi(34)
+    private void handleHealth34(Uri uri, String id) {
+        String action = uri.getQueryParameter("action");
+        try {
+            if (healthImporter == null) healthImporter = new HealthImporter(this, this::healthReply);
+            if ("cancel".equals(action)) { healthImporter.cancel(); healthRequestId = null; return; }
+            if ("settings".equals(action)) {
+                startActivity(new Intent("android.health.connect.action.HEALTH_HOME_SETTINGS"));
+                return;
+            }
+            if (!"read".equals(action)) return;
+            if (healthRequestId != null) { healthMessage(id, "Já existe uma solicitação de autorização. Conclua a janela do Android."); return; }
+            healthRequestId = id;
+            java.util.ArrayList<String> needed = new java.util.ArrayList<>();
+            for (String permission : HealthImporter.PERMISSIONS) {
+                if (checkSelfPermission(permission) != android.content.pm.PackageManager.PERMISSION_GRANTED) needed.add(permission);
+            }
+            if (!needed.isEmpty()) requestPermissions(needed.toArray(new String[0]), HEALTH_PERMISSIONS);
+            else { healthRequestId = null; healthImporter.read(id); }
+        } catch (RuntimeException error) {
+            healthRequestId = null;
+            healthMessage(id, "Não foi possível abrir o Health Connect. Confira se está disponível e atualizado neste aparelho.");
+        }
+    }
+    @Override public void onRequestPermissionsResult(int code, String[] permissions, int[] grants) {
+        super.onRequestPermissionsResult(code, permissions, grants);
+        if (code == HEALTH_PERMISSIONS && android.os.Build.VERSION.SDK_INT >= 34 && healthImporter != null && healthRequestId != null) {
+            String id = healthRequestId; healthRequestId = null;
+            healthImporter.read(id);
+        }
     }
 
     private void exportBackup(boolean share) {
@@ -208,10 +263,15 @@ public final class MainActivity extends Activity {
         webView.evaluateJavascript("(function(){var d=document.querySelector('dialog[open]');if(d){d.close();return true;}var s=document.getElementById('settingsPage');if(s&&s.classList.contains('open')){document.getElementById('closeSettings').click();return true;}var m=document.getElementById('modalBackdrop');if(m&&m.classList.contains('open')){m.classList.remove('open');return true;}return false;})()", handled -> { if (!"true".equals(handled)) finish(); });
     }
     @Override protected void onStop() {
+        if (android.os.Build.VERSION.SDK_INT >= 34 && healthImporter != null && healthRequestId == null) {
+            healthImporter.cancel();
+            if (webView != null) webView.evaluateJavascript("window.onNativeHealthPaused && window.onNativeHealthPaused();", null);
+        }
         if (webView != null) webView.evaluateJavascript("document.getElementById('backupPassword').value='';", null);
         super.onStop();
     }
     @Override protected void onDestroy() {
+        if (android.os.Build.VERSION.SDK_INT >= 34 && healthImporter != null) healthImporter.cancel();
         if (fileChooser != null) { fileChooser.onReceiveValue(null); fileChooser = null; }
         pendingBackup = null;
         if (webView != null) { webView.stopLoading(); webView.destroy(); webView = null; }

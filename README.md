@@ -23,6 +23,14 @@ A proteção por senha vem ativada. Os arquivos protegidos usam AES-256-GCM, com
 
 O backup sem senha contém dados legíveis. O app de e-mail recebe o arquivo que você escolheu compartilhar; revise o destinatário antes de enviar. Não envie a senha junto com o anexo. Desinstalar o app apaga os dados locais. Faça backups antes de trocar de aparelho.
 
+## Xiaomi e Samsung (importação opcional)
+
+Em **Relógios**, consulte treinos de natação compartilhados pelo Mi Fitness ou Samsung Health com o Health Connect. Esta primeira implementação exige **Android 14+** com Health Connect disponível; o restante do diário continua funcionando em Android 6+.
+
+Autorize a leitura, revise os últimos 28 dias e marque os treinos a importar. Exercícios são necessários; distância e frequência cardíaca média são opcionais. Nenhuma sessão é salva sem seleção, e registros já importados são reconhecidos pelo identificador de origem ou horários idênticos. A importação preserva a origem no histórico e no backup. Os dados não são escritos de volta no Health Connect. Não há conexão direta com o relógio nem envio de planos para ele. Métricas dependem do que o aplicativo de origem compartilhar.
+
+A duração importada corresponde ao intervalo início/fim, arredondado em minutos, e pode incluir pausas. A compatibilidade com dados reais de cada modelo ainda precisa ser validada em aparelho. Veja [privacidade](docs/PRIVACY.md).
+
 ## Atualização pelo celular
 
 A rotina de compilação no GitHub Actions disponibiliza um APK de teste que instala ao lado do diário principal e um release sem assinatura. Para atualizar o diário principal, é necessária a chave original. Veja [como baixar, testar e preparar a atualização](docs/ATUALIZACAO-ANDROID.md).
@@ -51,6 +59,7 @@ python3 -m venv .venv
 .venv/bin/pip install -r tests/requirements.txt
 .venv/bin/python tests/test_local.py
 .venv/bin/python tests/test_workouts.py
+.venv/bin/python tests/test_health_import.py
 ```
 
 Os testes usam somente dados fictícios e bloqueiam requisições externas. Leia `docs/PRIVACY.md`, `docs/SECURITY.md` e `docs/F-DROID.md` para os limites, permissões e passos de submissão.

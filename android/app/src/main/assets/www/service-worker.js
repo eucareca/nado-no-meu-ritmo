@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-const CACHE = 'nado-local-v2';
-const ASSETS = ['./', 'index.html', 'app.js', 'settings.js', 'local-store.js', 'styles.css', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'nado-local-v3';
+const ASSETS = ['./', 'index.html', 'app.js', 'health-connect.js', 'settings.js', 'local-store.js', 'styles.css', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('nado-') && key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener('fetch', event => {

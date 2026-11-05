@@ -1,17 +1,27 @@
 # Política de privacidade
 
-Aplicativo: Nado no meu ritmo, versão 1.4.0.  
-Responsável: Tiago Assis Brasil.  
-Contato: tiago@tabinformatica.com.br  
+Aplicativo: Nado no meu ritmo, versão 1.6.0 em preparação.
+Responsável: Tiago Assis Brasil.
+Contato: tiago@tabinformatica.com.br
 Site: https://tabinformatica.com.br/nadonoseuritmo
 
 ## Armazenamento local
 
-O aplicativo registra somente as informações fornecidas por você: plano de natação, datas, duração, esforço, observações, peso e atividades extras. O e-mail para backup é guardado localmente se informado. O Android armazena esses dados na área privada do aplicativo.
+O aplicativo registra as informações fornecidas por você e as sessões cuja importação você autorizar: plano de natação, datas, duração, esforço, observações, peso e atividades extras. O e-mail para backup é guardado localmente se informado. O Android armazena esses dados na área privada do aplicativo.
 
 Não há conta, sincronização, servidor, rastreamento, anúncios ou acesso à internet pelo aplicativo. Ele não pede acesso a contatos, localização, câmera ou microfone. A permissão SET_ALARM serve para abrir o timer do Android por sua solicitação.
 
 Os dados locais não têm criptografia adicional implementada pelo app. Dependem das proteções do Android, do bloqueio de tela e da integridade do aparelho. As configurações do app desativam o backup automático do sistema e a transferência automática de dados entre aparelhos.
+
+## Importação opcional de treinos
+
+No Android 14 ou superior, a função Relógios consulta o Health Connect local, se disponível. As permissões são READ_EXERCISE (necessária), READ_DISTANCE e READ_HEART_RATE (opcionais). A consulta de exercícios lê os últimos 28 dias e exibe somente natação. A distância e a frequência cardíaca média são agregadas pelo horário e aplicativo de origem da sessão; ausência de dados não é convertida em zero ou estimada. A duração exibida é o intervalo entre início e fim, arredondado em minutos; não é o tempo ativo calculado pelo fabricante.
+
+A consulta ocorre por ação do usuário, com o app aberto. Não há leitura em segundo plano, escrita ou exclusão no Health Connect, acesso Bluetooth direto, envio de planos ao relógio ou envio de dados para servidores pelo diário. O Health Connect precisa receber os dados do Mi Fitness, Samsung Health ou outro aplicativo autorizado. As contas, o compartilhamento e a eventual nuvem desses aplicativos são regidos pelas políticas deles.
+
+Você revisa e marca quais treinos guardar. As cópias salvas incluem o aplicativo e o identificador do registro de origem, horários e métricas disponíveis. Esses campos permitem reconhecer importações repetidas e entram no backup manual. Revogar o acesso nas configurações do Health Connect impede novas consultas, mas não apaga cópias já importadas. Excluir uma sessão ou apagar o diário remove apenas os registros locais; não altera as origens nem backups já exportados.
+
+Esta primeira implementação consulta no máximo 2.000 registros de exercício e apresenta até 100 sessões de natação por busca. A tela informa quando o limite é atingido. Dados temporários da consulta são descartados ao fechar a janela ou reiniciar o aplicativo. Nenhum dado real de saúde deve ser incluído em logs, capturas, testes ou no repositório.
 
 ## Backups manuais
 

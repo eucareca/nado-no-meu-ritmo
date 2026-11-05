@@ -83,6 +83,7 @@ function setSync(label, stateName = '') {
 function remoteToLocal(row) {
     return {
         id: row.id,
+        health: row.health_data || null,
         date: row.session_date,
         duration: row.duration_minutes,
         effort: row.effort,
@@ -204,13 +205,22 @@ function drawChart() {
     el.innerHTML = `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Gráfico da duração de cada sessão"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#61e3d1" stop-opacity=".28"/><stop offset="1" stop-color="#61e3d1" stop-opacity="0"/></linearGradient></defs><line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#315366"/><polyline points="${pts}" fill="none" stroke="#61e3d1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${vals.map((v,i)=>`<circle cx="${p+i*step}" cy="${h-p-((v-min)/(max-min||1))*(h-2*p)}" r="4" fill="#61e3d1"/>`).join('')}</svg><div class="chart-labels"><span>${fmtDate(s[0].date)}</span><span>${fmtDate(s.at(-1).date)}</span></div>`
 }
 
+function healthSourceLabel(source) {
+    return ({'com.xiaomi.wearable':'Mi Fitness · Xiaomi', 'com.sec.android.app.shealth':'Samsung Health'})[source] || source;
+}
+function healthHistoryMetrics(health) {
+    const values = [];
+    if (health.distanceMeters != null) values.push(Number(health.distanceMeters).toLocaleString('pt-BR') + ' m');
+    if (health.heartRateAverage != null) values.push('FC média ' + Number(health.heartRateAverage) + ' bpm');
+    return values.length ? '<br>' + escapeHtml(values.join(' · ')) : '';
+}
 function renderHistory() {
     const host = document.getElementById('history'),
         sessions = [...state.sessions].sort((a, b) => b.date.localeCompare(a.date));
     if (!sessions.length) {
         host.innerHTML = '<div class="history-empty"><strong>Seu histórico começa com a primeira prática.</strong>Registre a sessão para guardar o que fez, como se sentiu e o próximo passo.</div>'
     } else {
-        host.innerHTML = '<div class="history-list">' + sessions.map((s, i) => `<div class="session-row"><div class="row-date">${fmtDate(s.date)}<small>${Number(s.planMinutes)||0} min planejados</small></div><div><b>${Number(s.duration)||0} min</b><span class="row-label">realizados</span></div><div class="effort" data-level="${escapeHtml(s.effort)}"><i class="effort-dot"></i><span>${escapeHtml(s.effort)}</span></div><div><span class="tag">${(s.actualBlocks||'').split('\n').filter(Boolean).length} bloco(s) registrado(s)</span><span class="row-label" style="margin-top:5px">${escapeHtml(s.notes||s.next||'Sem observações')}</span></div><button class="delete" title="Excluir sessão" aria-label="Excluir sessão de ${fmtDate(s.date)}" data-delete="${escapeHtml(s.id)}">×</button></div>`).join('') + '</div>'
+        host.innerHTML = '<div class="history-list">' + sessions.map((s, i) => `<div class="session-row"><div class="row-date">${fmtDate(s.date)}<small>${s.health ? escapeHtml(healthSourceLabel(s.health.source)) : (Number(s.planMinutes)||0) + ' min planejados'}</small></div><div><b>${Number(s.duration)||0} min</b><span class="row-label">realizados</span></div><div class="effort" data-level="${escapeHtml(s.effort)}"><i class="effort-dot"></i><span>${escapeHtml(s.effort)}</span></div><div><span class="tag">${(s.actualBlocks||'').split('\n').filter(Boolean).length} bloco(s) registrado(s)</span><span class="row-label" style="margin-top:5px">${escapeHtml(s.notes||s.next||'Sem observações')}${s.health ? healthHistoryMetrics(s.health) : ''}</span></div><button class="delete" title="Excluir sessão" aria-label="Excluir sessão de ${fmtDate(s.date)}" data-delete="${escapeHtml(s.id)}">×</button></div>`).join('') + '</div>'
     }
     document.getElementById('countMetric').textContent = sessions.length;
     document.getElementById('durationMetric').textContent = sessions.length ? Math.round(sessions.reduce((n, x) => n + (+x.duration || 0), 0) / sessions.length) + ' min' : '—';

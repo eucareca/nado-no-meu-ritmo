@@ -1,0 +1,1 @@
+Importação opcional de natação pelo Health Connect no Android 14+: exercícios compartilhados por Mi Fitness e Samsung Health, revisão antes de salvar, distância e FC média quando disponíveis, identificação de duplicados e preservação no backup.
