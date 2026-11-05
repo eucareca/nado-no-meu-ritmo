@@ -238,10 +238,10 @@ public final class MainActivity extends Activity {
     private void handleAutoBackup(Uri uri){
         String id=uri.getQueryParameter("id"),action=uri.getQueryParameter("action");
         if(id==null || !id.matches("[a-f0-9-]{36}"))return;
-        if("status".equals(action)){autoReply(id,AutoBackupStore.status(this));AutoBackupStore.WORK.execute(()->AutoBackupStore.resume(getApplicationContext()));return;}
+        if("status".equals(action)){autoReply(id,AutoBackupStore.status(getApplicationContext()));AutoBackupStore.WORK.execute(()->AutoBackupStore.resume(getApplicationContext()));return;}
         if("disable".equals(action)){
             if(autoTransfer!=null)autoTransfer.cancel();
-            AutoBackupStore.WORK.execute(()->{try{AutoBackupStore.disconnect(getApplicationContext());autoReply(id,AutoBackupStore.status(this));}catch(Exception error){autoError(id,error.getMessage());}});return;
+            AutoBackupStore.WORK.execute(()->{try{AutoBackupStore.disconnect(getApplicationContext());autoReply(id,AutoBackupStore.status(getApplicationContext()));}catch(Exception error){autoError(id,error.getMessage());}});return;
         }
         if("select".equals(action)){
             if(autoSelectId!=null || !AutoBackupStore.target(this).isEmpty()){autoError(id,"Conclua ou desative o destino atual antes de escolher outro.");return;}
@@ -258,7 +258,7 @@ public final class MainActivity extends Activity {
             autoTransfer.read(transfer,length,new AutoBackupTransfer.Callback(){
                 @Override public void failed(){autoError(id,"Não foi possível preparar a cópia criptografada. Tente atualizar novamente.");}
                 @Override public void ready(String text){AutoBackupStore.WORK.execute(()->{
-                    try{AutoBackupStore.stage(getApplicationContext(),target,text);autoReply(id,AutoBackupStore.status(this));}
+                    try{AutoBackupStore.stage(getApplicationContext(),target,text);autoReply(id,AutoBackupStore.status(getApplicationContext()));}
                     catch(Exception error){autoError(id,"Não foi possível guardar a cópia criptografada. Seus registros foram mantidos.");}
                 });}
             });
@@ -464,7 +464,7 @@ public final class MainActivity extends Activity {
             if(result!=RESULT_OK || data==null || data.getData()==null){autoError(id,"Escolha de destino cancelada. Backup automático não ativado.");return;}
             Uri destination=data.getData();int flags=data.getFlags();
             AutoBackupStore.WORK.execute(()->{
-                try{AutoBackupStore.connect(getApplicationContext(),destination,flags);autoReply(id,AutoBackupStore.status(this));}
+                try{AutoBackupStore.connect(getApplicationContext(),destination,flags);autoReply(id,AutoBackupStore.status(getApplicationContext()));}
                 catch(Exception error){autoError(id,error.getMessage());}
             });
         } else if(request==SAVE_PHOTO){

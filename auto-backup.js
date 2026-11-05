@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 'use strict';
 // Automatic encrypted copies through the user-selected Android document provider.
-let autoConfig=null,autoEnabled=false,autoTarget=null,autoTimer=null,autoRunning=false,autoAgain=false,autoPayload=null,autoLastSnapshot=null;
+let autoConfig=null,autoEnabled=false,autoTarget=null,autoTimer=null,autoRunning=false,autoAgain=false,autoPayload=null,autoLastSnapshot=null,autoEpoch=0,autoManaging=false;
 const autoRequests=new Map();
 const isAutoBackupApp=()=>isAndroidApp() && window.nadoAutoBackupReady===true;
 let autoBackupTransport=url=>{location.href=url;};
@@ -62,32 +62,37 @@ async function queueAutoBackup(force=false){
 }
 function scheduleAutoBackup(){clearTimeout(autoTimer);autoTimer=setTimeout(()=>void queueAutoBackup(),1500);}
 async function resumeAutoBackup(){
-    if(!isAutoBackupApp() || autoRunning || autoRequests.size)return;
+    if(!isAutoBackupApp() || autoRunning || autoRequests.size || autoManaging)return;
+    const epoch=autoEpoch;
     try{
-        const result=await autoNative('status');autoEnabled=result.enabled;autoTarget=result.target||null;
+        const result=await autoNative('status');if(epoch!==autoEpoch)return;autoEnabled=result.enabled;autoTarget=result.target||null;
         document.getElementById('autoBackupDisable').disabled=!autoEnabled;
         document.getElementById('autoBackupNow').disabled=!autoEnabled;
         autoMessage(result.message);
-        if(autoEnabled){autoConfig=await autoKeyStore('get');if(!autoConfig){await resetAutoBackup();autoMessage('Chave local indisponível. Ative novamente com uma senha e escolha um novo arquivo.');return;}scheduleAutoBackup();}
+        if(autoEnabled){const config=await autoKeyStore('get');if(epoch!==autoEpoch)return;autoConfig=config;if(!autoConfig){await resetAutoBackup();autoMessage('Chave local indisponível. Ative novamente com uma senha e escolha um novo arquivo.');return;}scheduleAutoBackup();}
     }catch(error){autoMessage(error.message);}
 }
 window.resumeAutoBackup=resumeAutoBackup;
 async function resetAutoBackup(){
+    if(autoManaging)throw new Error('Conclua a ativação ou desativação em andamento.');
+    autoManaging=true;autoEpoch++;
+    try{
     autoEnabled=false;autoTarget=null;autoConfig=null;autoLastSnapshot=null;autoAgain=false;clearTimeout(autoTimer);
     for(const [id,request] of autoRequests){if(request.action==='stage'){clearTimeout(request.timeout);autoRequests.delete(id);request.reject(new Error('Backup automático desativado.'));}}
     if(isAutoBackupApp())await autoNative('disable');
     if(isAutoBackupApp())await autoKeyStore('delete');autoPayload=null;
     document.getElementById('autoBackupDisable').disabled=true;document.getElementById('autoBackupNow').disabled=true;
     autoMessage('Backup automático desativado. Arquivos já salvos no Drive foram mantidos.');
+    }finally{autoManaging=false;}
 }
 window.resetAutoBackup=resetAutoBackup;
 async function enableAutoBackup(){
-    const button=document.getElementById('autoBackupEnable');button.disabled=true;
+    const button=document.getElementById('autoBackupEnable');if(autoManaging)return;autoManaging=true;autoEpoch++;button.disabled=true;
     try{
         if(!isAutoBackupApp())throw new Error('Use o aplicativo Android, com o Google Drive instalado e sua conta adicionada.');
         if(autoEnabled)throw new Error('Desative o destino atual antes de escolher outra conta ou senha.');
         const status=await autoNative('status');
-        if(status.enabled){autoEnabled=true;autoTarget=status.target;autoConfig=await autoKeyStore('get');throw new Error('Já existe um destino autorizado. Desative-o antes de escolher outra conta ou senha.');}
+        if(status.enabled){autoEnabled=true;autoTarget=status.target;autoConfig=await autoKeyStore('get');document.getElementById('autoBackupDisable').disabled=false;throw new Error('Já existe um destino autorizado. Desative-o antes de escolher outra conta ou senha.');}
         const field=document.getElementById('autoBackupPassword'),password=field.value;field.value='';
         if(password.length<12)throw new Error('Escolha uma senha de pelo menos 12 caracteres. Guarde-a para recuperar seus dados.');
         const salt=crypto.getRandomValues(new Uint8Array(16)),key=await backupKey(password,salt,['encrypt']);
@@ -97,7 +102,7 @@ async function enableAutoBackup(){
         document.getElementById('autoBackupDisable').disabled=false;document.getElementById('autoBackupNow').disabled=false;
         autoMessage(result.message);await queueAutoBackup(true);
     }catch(error){if(!autoEnabled)await autoKeyStore('delete').catch(()=>{});autoMessage(error.message);}
-    finally{button.disabled=false;}
+    finally{button.disabled=false;autoManaging=false;document.getElementById('autoBackupPassword').value='';}
 }
 function setupAutoBackup(){
     const card=document.createElement('section');card.className='card';card.id='autoBackupCard';

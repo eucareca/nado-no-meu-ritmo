@@ -25,7 +25,7 @@ MOCK='''()=>{
     staged.push(JSON.parse(text));result={message:'Cópia criptografada preparada.'};
    }
   }else result=nativeBackup;
-  setTimeout(()=>receiveAutoBackup(id,result),10);
+  setTimeout(()=>receiveAutoBackup(id,result),action==='status' && window.autoStatusDelay?window.autoStatusDelay:10);
  };
 }'''
 
@@ -97,6 +97,15 @@ def main():
   page.wait_for_function('()=>!nativeBackup.enabled && !autoEnabled')
   assert page.evaluate('staged.length')==count
   assert page.evaluate('JSON.stringify(readRecords())')==before
+  # A late status reply cannot reactivate a target after explicit disconnection.
+  page.locator('#settingsBtn').click();page.locator('#autoBackupPassword').fill(password);page.locator('#autoBackupEnable').click()
+  page.wait_for_function('()=>autoEnabled && !autoRunning && !autoManaging')
+  count=page.evaluate('staged.length')
+  page.evaluate('autoStatusDelay=300;resumeAutoBackup();resetAutoBackup()')
+  page.wait_for_timeout(400)
+  assert page.evaluate('!autoEnabled && !nativeBackup.enabled')
+  assert page.evaluate('staged.length')==count
+  page.evaluate('autoStatusDelay=0');page.locator('#closeSettings').click()
   # Disable/erase disconnect before the local diary is cleared, preserving the existing cloud copy.
   page.locator('#settingsBtn').click();page.locator('#autoBackupPassword').fill(password);page.locator('#autoBackupEnable').click()
   page.wait_for_function('()=>autoEnabled && !autoRunning && !document.getElementById("autoBackupEnable").disabled')
