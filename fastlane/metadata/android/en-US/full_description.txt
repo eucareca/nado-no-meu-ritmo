@@ -1,9 +1,11 @@
 Plan swimming sessions, record duration, effort and notes, and follow your progress. You can also record body weight and extra activities such as stretching and meditation.
 
-Records stay on your device. The app has no login, ads, trackers or internet permission.
+Records are saved on your device; external copies are optional. The app has no login, ads, trackers or internet permission.
 
 Settings let you save and restore backups, protect files with a password, and select an email app to send a backup to yourself. Sharing is manual and requires confirmation in the selected app.
 
 Includes a local timer and integration with the Android system timer. This diary does not provide medical or nutritional advice. Source code is licensed under Apache-2.0.
 
 The app interface is currently available in Brazilian Portuguese.
+
+Optional encrypted automatic backups to a file you select in Google Drive or another Android document provider. Each user authorizes their destination; the provider handles cloud uploads. Manual password-based restore; no automatic merging between phones.

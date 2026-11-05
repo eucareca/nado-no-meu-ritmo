@@ -24,11 +24,17 @@ for path in sorted(ROOT.rglob('*')):
 manifest = ET.parse(ROOT/'android/app/src/main/AndroidManifest.xml')
 ns = '{http://schemas.android.com/apk/res/android}'
 permissions = {node.get(ns+'name') for node in manifest.findall('uses-permission')}
-if permissions != {'com.android.alarm.permission.SET_ALARM'}: failures.append('Unexpected Android permissions')
+if permissions != {'com.android.alarm.permission.SET_ALARM', 'android.permission.health.READ_EXERCISE', 'android.permission.health.READ_DISTANCE', 'android.permission.health.READ_HEART_RATE', 'android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.READ_CALENDAR', 'android.permission.WRITE_CALENDAR'}: failures.append('Unexpected Android permissions')
 app = manifest.find('application')
+alias = app.find('activity-alias')
+if alias is None or alias.get(ns+'permission') != 'android.permission.START_VIEW_PERMISSION_USAGE': failures.append('Health privacy entry point is not protected')
 if app.get(ns+'allowBackup') != 'false': failures.append('Automatic backup enabled')
+receiver = app.find('receiver')
+if receiver is None or receiver.get(ns+'exported') != 'false': failures.append('Training receiver exposed')
 provider = app.find('provider')
 if provider is None or provider.get(ns+'exported') != 'false': failures.append('Attachment provider exposed')
+service = app.find('service')
+if service is None or service.get(ns+'permission') != 'android.permission.BIND_JOB_SERVICE': failures.append('Backup job service is not protected')
 html = (ROOT/'index.html').read_text()
 for forbidden in ['cdn.jsdelivr.net', 'authScreen', 'googleSignInBtn', 'musicBtn']:
     if forbidden in html: failures.append('Removed feature remains in HTML')

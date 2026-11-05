@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
  <head>
-  <meta content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; media-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'" http-equiv="Content-Security-Policy"/>
+  <meta content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; media-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'" http-equiv="Content-Security-Policy"/>
   <meta charset="utf-8"/>
   <meta content="width=device-width,initial-scale=1" name="viewport"/>
   <meta content="#071b2a" name="theme-color"/>
@@ -14,6 +14,7 @@
   <title>
    Nado no meu ritmo
   </title>
+  <script src="appearance.js"></script>
   <link href="styles.css" rel="stylesheet"/>
   <script src="settings.js">
   </script>
@@ -76,14 +77,14 @@
      <div>
       <div class="side-head">
        <div class="side-title">
-        Treino base · sessão 1
+        Seu treino atual
        </div>
-       <span class="pill">
+       <span class="pill" id="heroDuration">
         30 MIN
        </span>
       </div>
       <div class="big-time">
-       30
+       <b id="heroMinutes">30</b>
        <span>
         minutos
        </span>
@@ -131,6 +132,10 @@
       <button class="btn btn-quiet" id="editPlanBtn2">
        Editar
       </button>
+     </div>
+     <div class="actions workout-tools">
+      <button class="btn btn-secondary" id="workoutLibrary" type="button">Modelos de treino</button>
+      <button class="btn btn-primary" id="workoutStart" type="button">Iniciar treino guiado</button>
      </div>
      <div class="schedule" id="schedule">
      </div>
@@ -180,6 +185,20 @@
       </b>
       comece observando como se sente com os blocos atuais. Depois, ajuste uma coisa de cada vez.
      </div>
+    </section>
+    <section class="card workout-card" id="workoutCard" hidden aria-labelledby="workoutHeading">
+     <div class="eyebrow">Treino em andamento</div>
+     <h2 id="workoutHeading">Execução guiada</h2>
+     <div id="workoutPhase" class="workout-phase" role="status"></div>
+     <div id="workoutClock" class="timer-display" role="timer" aria-label="Tempo restante na etapa">00:00</div>
+     <progress id="workoutProgress" max="1" value="0" aria-label="Progresso do treino"></progress>
+     <p id="workoutDetail" class="sub"></p>
+     <div class="actions">
+      <button id="workoutPause" class="btn btn-primary" type="button">Pausar</button>
+      <button id="workoutCancel" class="btn btn-secondary" type="button">Encerrar treino</button>
+      <button id="workoutRegister" class="btn btn-primary" type="button" hidden>Registrar este treino</button>
+     </div>
+     <p class="sub">Mantenha o aplicativo aberto e a tela ligada. O aviso sonoro depende do volume do aparelho; com a tela bloqueada, o sistema pode suspender os avisos.</p>
     </section>
     <section class="card wellness-card">
      <div class="card-head">
@@ -430,5 +449,10 @@
   </div>
   <script src="app.js">
   </script>
+  <script src="health-connect.js"></script>
+  <script src="training-planner.js"></script>
+  <script src="calendar-sync.js"></script>
+  <script src="photo-studio.js"></script>
+<script src="auto-backup.js"></script>
  </body>
 </html>

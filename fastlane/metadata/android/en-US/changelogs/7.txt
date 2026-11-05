@@ -1,0 +1,1 @@
+Optional swimming imports through Health Connect on Android 14+: workouts shared by Mi Fitness and Samsung Health, review before saving, distance and average heart rate when available, duplicate recognition and backup preservation.

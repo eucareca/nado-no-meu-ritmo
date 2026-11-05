@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Publicar fonte de produção
+on:
+  workflow_run:
+    workflows: [Compilar APK Android]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-source-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Obter o código aprovado da branch principal
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Conferir e publicar versão do fonte
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/audit-source.py
+          python3 tests/test_publish_release.py
+          python3 scripts/publish-source-release.py

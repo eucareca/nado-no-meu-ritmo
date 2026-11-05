@@ -1,0 +1,1 @@
+Modelos editáveis de treino, séries com repetições e pausas, timer guiado e registro da sessão após revisão. Melhorias no editor e na preservação dos dados nos backups. Mantido o funcionamento local.

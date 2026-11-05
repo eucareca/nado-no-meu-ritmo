@@ -1,0 +1,1 @@
+Tema claro, escuro ou automático com preferência local. Editor de foto com a logo do aplicativo, texto opcional e formatos feed, quadrado e stories. Salvar PNG ou compartilhar pelo aplicativo escolhido, sem publicação automática.

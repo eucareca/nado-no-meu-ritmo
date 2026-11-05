@@ -1,0 +1,1 @@
+Backup automático criptografado opcional: escolha Google Drive, conta e pasta pelo seletor do Android. Cópias após alterações, fila em segundo plano, novas tentativas, status e desativação. Restauração manual com senha; fotos não incluídas.

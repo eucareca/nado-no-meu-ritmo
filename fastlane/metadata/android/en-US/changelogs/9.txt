@@ -1,0 +1,1 @@
+Optional two-way sync of an app-owned swimming series with an Android Google calendar. Per-user permission/calendar selection, foreground/manual sync, explicit conflict handling, unlinking and preserved local history.

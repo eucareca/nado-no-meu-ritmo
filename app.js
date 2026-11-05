@@ -10,7 +10,10 @@ const defaultPlan = [{
     name: 'Série principal: 10 × 25 m',
     minutes: 19,
     type: 'serie',
-    detail: 'Cada repetição é uma ida única de 25 m. Termine na borda e descanse 1 min antes da próxima; são 9 pausas entre as 10 idas. A volta começa uma nova repetição, sem emendar.'
+    rounds: 10,
+    workSeconds: 60,
+    restSeconds: 60,
+    detail: 'Cada repetição é uma ida única de 25 m, com referência de 60 s de nado ajustável no editor. Termine na borda e descanse 1 min antes da próxima; são 9 pausas entre as 10 idas. A volta começa uma nova repetição, sem emendar.'
 }, {
     name: 'Volta à calma',
     minutes: 6,
@@ -45,7 +48,8 @@ function load() {
 }
 
 function save() {
-    localStorage.setItem(activeCacheKey, JSON.stringify(state))
+    localStorage.setItem(activeCacheKey, JSON.stringify(state));
+    document.dispatchEvent(new Event('diarySaved'));
 }
 
 function fmtDate(v) {
@@ -58,7 +62,7 @@ function fmtDate(v) {
 }
 
 function total(plan) {
-    return plan.reduce((n, b) => n + (+b.minutes || 0), 0)
+    return Math.round(plan.reduce((n, b) => n + (+b.minutes || 0), 0) * 100) / 100;
 }
 
 function escapeHtml(s = '') {
@@ -80,6 +84,7 @@ function setSync(label, stateName = '') {
 function remoteToLocal(row) {
     return {
         id: row.id,
+        health: row.health_data || null,
         date: row.session_date,
         duration: row.duration_minutes,
         effort: row.effort,
@@ -144,6 +149,8 @@ async function enterApp(user) {
         state.sessions = rows.map(remoteToLocal);
         state.plan = setting && Array.isArray(setting.plan) && setting.plan.length ? setting.plan : structuredClone(defaultPlan);
         state.planHint = setting ? setting.plan_hint || '' : '';
+        state.trainingSchedule = validateTrainingSchedule(setting?.training_schedule || null);
+        document.dispatchEvent(new Event('diaryLoaded'));
         save();
         document.getElementById('weightDate').value = new Date().toLocaleDateString('en-CA');
         document.getElementById('activityDate').value = new Date().toLocaleDateString('en-CA');
@@ -170,6 +177,7 @@ async function persistPlan() {
         user_id: currentUser.id,
         plan: state.plan,
         plan_hint: state.planHint || '',
+        training_schedule: state.trainingSchedule || null,
         updated_at: new Date().toISOString()
     });
     if (error) throw error;
@@ -178,7 +186,9 @@ async function persistPlan() {
 }
 
 function renderSchedule() {
-    document.getElementById('schedule').innerHTML = state.plan.map((b, i) => `<div class="step"><div class="step-num">${String(i+1).padStart(2,'0')}</div><div><div class="step-name">${escapeHtml(b.name)}</div><div class="step-detail">${escapeHtml(b.detail||'')}</div></div><div class="step-time"><span class="${b.type==='descanso'?'rest-chip':b.type==='leve'?'easy-chip':b.type==='serie'?'series-chip':'swim-chip'}">${b.type==='descanso'?'PAUSA':b.type==='leve'?'LEVE':b.type==='serie'?'SÉRIE':'NADO'}</span> &nbsp;${+b.minutes} min</div></div>`).join('') + `<div class="sub" style="text-align:right;margin-top:3px">Total planejado: <b style="color:var(--text)">${total(state.plan)} min</b></div>`
+    document.getElementById('heroMinutes').textContent = total(state.plan);
+    document.getElementById('heroDuration').textContent = total(state.plan) + ' MIN';
+    document.getElementById('schedule').innerHTML = state.plan.map((b, i) => `<div class="step"><div class="step-num">${String(i+1).padStart(2,'0')}</div><div><div class="step-name">${escapeHtml(b.name)}</div><div class="step-detail">${escapeHtml(b.detail||'')}${b.type === 'serie' && b.rounds ? ' · ' + b.rounds + ' × ' + b.workSeconds + ' s · pausa ' + b.restSeconds + ' s' : ''}</div></div><div class="step-time"><span class="${b.type==='descanso'?'rest-chip':b.type==='leve'?'easy-chip':b.type==='serie'?'series-chip':'swim-chip'}">${b.type==='descanso'?'PAUSA':b.type==='leve'?'LEVE':b.type==='serie'?'SÉRIE':'NADO'}</span> &nbsp;${Math.round(+b.minutes * 100) / 100} min</div></div>`).join('') + `<div class="sub" style="text-align:right;margin-top:3px">Total planejado: <b style="color:var(--text)">${total(state.plan)} min</b></div>`
 }
 
 function drawChart() {
@@ -199,17 +209,27 @@ function drawChart() {
     el.innerHTML = `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Gráfico da duração de cada sessão"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#61e3d1" stop-opacity=".28"/><stop offset="1" stop-color="#61e3d1" stop-opacity="0"/></linearGradient></defs><line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#315366"/><polyline points="${pts}" fill="none" stroke="#61e3d1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${vals.map((v,i)=>`<circle cx="${p+i*step}" cy="${h-p-((v-min)/(max-min||1))*(h-2*p)}" r="4" fill="#61e3d1"/>`).join('')}</svg><div class="chart-labels"><span>${fmtDate(s[0].date)}</span><span>${fmtDate(s.at(-1).date)}</span></div>`
 }
 
+function healthSourceLabel(source) {
+    return ({'com.xiaomi.wearable':'Mi Fitness · Xiaomi', 'com.sec.android.app.shealth':'Samsung Health'})[source] || source;
+}
+function healthHistoryMetrics(health) {
+    const values = [];
+    if (health.distanceMeters != null) values.push(Number(health.distanceMeters).toLocaleString('pt-BR') + ' m');
+    if (health.heartRateAverage != null) values.push('FC média ' + Number(health.heartRateAverage) + ' bpm');
+    return values.length ? '<br>' + escapeHtml(values.join(' · ')) : '';
+}
 function renderHistory() {
     const host = document.getElementById('history'),
         sessions = [...state.sessions].sort((a, b) => b.date.localeCompare(a.date));
     if (!sessions.length) {
         host.innerHTML = '<div class="history-empty"><strong>Seu histórico começa com a primeira prática.</strong>Registre a sessão para guardar o que fez, como se sentiu e o próximo passo.</div>'
     } else {
-        host.innerHTML = '<div class="history-list">' + sessions.map((s, i) => `<div class="session-row"><div class="row-date">${fmtDate(s.date)}<small>${Number(s.planMinutes)||0} min planejados</small></div><div><b>${Number(s.duration)||0} min</b><span class="row-label">realizados</span></div><div class="effort" data-level="${escapeHtml(s.effort)}"><i class="effort-dot"></i><span>${escapeHtml(s.effort)}</span></div><div><span class="tag">${(s.actualBlocks||'').split('\n').filter(Boolean).length} bloco(s) registrado(s)</span><span class="row-label" style="margin-top:5px">${escapeHtml(s.notes||s.next||'Sem observações')}</span></div><button class="delete" title="Excluir sessão" aria-label="Excluir sessão de ${fmtDate(s.date)}" data-delete="${escapeHtml(s.id)}">×</button></div>`).join('') + '</div>'
+        host.innerHTML = '<div class="history-list">' + sessions.map((s, i) => `<div class="session-row"><div class="row-date">${fmtDate(s.date)}<small>${s.health ? escapeHtml(healthSourceLabel(s.health.source)) : (Number(s.planMinutes)||0) + ' min planejados'}</small></div><div><b>${Number(s.duration)||0} min</b><span class="row-label">realizados</span></div><div class="effort" data-level="${escapeHtml(s.effort)}"><i class="effort-dot"></i><span>${escapeHtml(s.effort)}</span></div><div><span class="tag">${(s.actualBlocks||'').split('\n').filter(Boolean).length} bloco(s) registrado(s)</span><span class="row-label" style="margin-top:5px">${escapeHtml(s.notes||s.next||'Sem observações')}${s.health ? healthHistoryMetrics(s.health) : ''}</span></div><button class="delete" title="Excluir sessão" aria-label="Excluir sessão de ${fmtDate(s.date)}" data-delete="${escapeHtml(s.id)}">×</button></div>`).join('') + '</div>'
     }
     document.getElementById('countMetric').textContent = sessions.length;
     document.getElementById('durationMetric').textContent = sessions.length ? Math.round(sessions.reduce((n, x) => n + (+x.duration || 0), 0) / sessions.length) + ' min' : '—';
     drawChart();
+    document.dispatchEvent(new Event('diaryChanged'));
     const last = sessions[0];
     document.getElementById('nextPlan').innerHTML = last && last.next ? `<b>Próxima evolução:</b> ${escapeHtml(last.next)}` : `<b>Próxima evolução:</b> ${escapeHtml(state.planHint||NEXT_PROGRESSION)}`;
     host.querySelectorAll('[data-delete]').forEach(b => b.onclick = async () => {
@@ -431,80 +451,91 @@ function setupTimer() {
 const backdrop = document.getElementById('modalBackdrop'),
     form = document.getElementById('sessionForm');
 
+let sessionWorkout = null;
 function openModal() {
+    sessionWorkout = null;
     document.getElementById('modalTitle').textContent = 'Registrar sessão';
     document.getElementById('sessionDate').value = new Date().toLocaleDateString('en-CA');
     document.getElementById('durationActual').value = total(state.plan) || 30;
     document.getElementById('effort').value = 'Confortável';
     document.getElementById('progressNote').value = '';
     document.getElementById('notes').value = '';
-    document.getElementById('actualBlocks').value = state.plan.map(b => `${b.minutes} min · ${b.name}`).join('\n');
+    document.getElementById('actualBlocks').value = state.plan.map(b => `${Math.round(+b.minutes * 100) / 100} min · ${b.name}`).join('\n');
     backdrop.classList.add('open')
 }
 
+let planDraft = null;
+function readPlanDraft() {
+    return [...form.querySelectorAll('.block-line')].map(r => ({
+        name: r.querySelector('[data-name]').value.trim() || 'Bloco',
+        minutes: +r.querySelector('[data-min]').value,
+        type: r.querySelector('[data-type]').value,
+        detail: r.querySelector('[data-detail]').value.trim(),
+        rounds: +r.querySelector('[data-rounds]').value,
+        workSeconds: +r.querySelector('[data-work]').value,
+        restSeconds: +r.querySelector('[data-rest]').value
+    }));
+}
 function openPlanEditor() {
+    planDraft = structuredClone(state.plan);
+    drawPlanEditor(state.planHint || '');
+}
+function drawPlanEditor(hint) {
     document.getElementById('modalTitle').textContent = 'Ajustar treino planejado';
-    form.innerHTML = `<div class="form-grid"><div class="block-editor"><div class="block-editor-title"><span>Blocos do treino · total atual: <b id="planTotal">${total(state.plan)} min</b></span><button class="btn btn-quiet" type="button" id="addBlock">＋ Bloco</button></div><div id="blockRows">${state.plan.map((b,i)=>blockRow(b,i)).join('')}</div></div><div class="field full"><label for="planHint">Nota para a próxima sessão</label><input id="planHint" placeholder="Ex.: repetir o treino e observar como se sente"></div></div><div class="modal-footer"><span class="sub">O plano pode ser mudado a qualquer momento.</span><button class="btn btn-primary" type="submit">Salvar treino</button></div>`;
+    form.innerHTML = `<div class="form-grid"><div class="block-editor"><div class="block-editor-title"><span>Blocos do treino</span><button class="btn btn-quiet" type="button" id="addBlock">＋ Bloco</button></div><p class="sub">Bloco simples: use os minutos. Série: configure repetições, segundos de nado e pausa entre repetições (sem pausa ao final).</p><div id="blockRows">${planDraft.map(blockRow).join('')}</div></div><div class="field full"><label for="planHint">Nota para a próxima sessão</label><input id="planHint" maxlength="2000" value="${escapeHtml(hint)}"></div></div><div class="modal-footer"><span class="sub">Alterações só são aplicadas ao salvar.</span><button class="btn btn-primary" type="submit">Salvar treino</button></div>`;
     backdrop.classList.add('open');
     document.getElementById('addBlock').onclick = () => {
-        state.plan.push({
-            name: 'Novo bloco',
-            minutes: 2,
-            type: 'nado',
-            detail: ''
-        });
-        openPlanEditor()
+        const hint = document.getElementById('planHint').value;
+        planDraft = readPlanDraft();
+        if (planDraft.length >= 64) return toast('Use no máximo 64 blocos.');
+        planDraft.push({name: 'Novo bloco', minutes: 2, type: 'nado', detail: ''});
+        drawPlanEditor(hint);
     };
-    document.getElementById('blockRows').addEventListener('input', e => {
-        if (e.target.matches('[data-min]')) {
-            const mins = [...document.querySelectorAll('[data-min]')].reduce((n, x) => n + (+x.value || 0), 0);
-            document.getElementById('planTotal').textContent = mins + ' min'
-        }
-    });
-    document.getElementById('blockRows').addEventListener('click', e => {
+    document.getElementById('blockRows').onclick = e => {
         const btn = e.target.closest('[data-remove]');
-        if (btn) {
-            state.plan.splice(+btn.dataset.remove, 1);
-            openPlanEditor()
+        if (!btn) return;
+        const hint = document.getElementById('planHint').value;
+        planDraft = readPlanDraft();
+        planDraft.splice(+btn.dataset.remove, 1);
+        drawPlanEditor(hint);
+    };
+    document.getElementById('blockRows').onchange = e => {
+        if (e.target.matches('[data-type]')) {
+            const row = e.target.closest('.block-line');
+            row.querySelector('[data-min]').disabled = e.target.value === 'serie';
+            row.querySelectorAll('[data-rounds],[data-work],[data-rest]').forEach(input => input.disabled = e.target.value !== 'serie');
         }
-    });
+    };
     form.onsubmit = async e => {
         e.preventDefault();
-        const rows = [...document.querySelectorAll('.block-line')];
-        const plan = rows.map(r => ({
-            name: r.querySelector('[data-name]').value.trim() || 'Bloco',
-            minutes: Math.max(1, +r.querySelector('[data-min]').value || 1),
-            type: r.querySelector('[data-type]').value,
-            detail: ''
-        }));
-        if (!plan.length) {
-            toast('Adicione pelo menos um bloco.');
-            return
-        }
+        let plan;
+        try {
+            plan = backupPlan(readPlanDraft().map(b => b.type === 'serie' ? {...b, minutes: (b.rounds * b.workSeconds + (b.rounds - 1) * b.restSeconds) / 60} : b));
+            if (total(plan) > 240) throw new Error('O treino deve ter no máximo 240 minutos.');
+        } catch (err) { return toast(err.message); }
+        const previous = {plan: state.plan, hint: state.planHint};
         state.plan = plan;
         state.planHint = document.getElementById('planHint').value.trim();
-        setSync('Salvando…', 'busy');
         try {
             await persistPlan();
-            closeModal();
-            form.innerHTML = originalForm;
-            attachForm();
-            render();
-            toast('Treino atualizado.')
+            closeModal(); render(); toast('Treino atualizado.');
         } catch (err) {
-            toast('Falha ao salvar treino: ' + err.message);
-            setSync('Falha ao salvar', 'error')
+            state.plan = previous.plan; state.planHint = previous.hint;
+            toast('Falha ao salvar treino: ' + err.message); setSync('Falha ao salvar', 'error');
         }
-    }
+    };
 }
-
 function blockRow(b, i) {
-    return `<div class="block-line"><input data-name value="${escapeHtml(b.name)}" aria-label="Nome do bloco"><input data-min type="number" min="1" max="180" value="${+b.minutes}" aria-label="Minutos"><select data-type aria-label="Tipo"><option value="nado" ${b.type==='nado'?'selected':''}>Nado</option><option value="serie" ${b.type==='serie'?'selected':''}>Série</option><option value="descanso" ${b.type==='descanso'?'selected':''}>Descanso</option><option value="leve" ${b.type==='leve'?'selected':''}>Leve</option></select><button type="button" data-remove="${i}" aria-label="Remover bloco">×</button></div>`
+    const series = b.type === 'serie';
+    const field = (label, attr, value, min, max, disabled = false) => `<label>${label}<input ${attr} type="number" required min="${min}" max="${max}" step="${attr === 'data-min' ? '0.01' : '1'}" value="${value}" ${disabled ? 'disabled' : ''}></label>`;
+    return `<div class="block-line"><label class="block-name">Nome<input data-name maxlength="160" required value="${escapeHtml(b.name)}"></label><label>Tipo<select data-type>${['nado','serie','descanso','leve'].map(t => `<option value="${t}" ${b.type === t ? 'selected' : ''}>${{nado:'Nado',serie:'Série',descanso:'Descanso',leve:'Leve'}[t]}</option>`).join('')}</select></label>${field('Minutos', 'data-min', Math.round(b.minutes * 100) / 100, 0.01, 180, series)}${field('Repetições', 'data-rounds', b.rounds || 1, 1, 100, !series)}${field('Nado (seg)', 'data-work', b.workSeconds || Math.round(b.minutes * 60), 1, 10800, !series)}${field('Pausa (seg)', 'data-rest', b.restSeconds || 0, 0, 600, !series)}<label class="block-detail">Detalhes / estilo / distância<input data-detail maxlength="2000" value="${escapeHtml(b.detail || '')}" placeholder="Ex.: crawl · 25 m por repetição"></label><button type="button" data-remove="${i}" aria-label="Remover bloco ${i + 1}">Remover bloco</button></div>`;
 }
 const originalForm = form.innerHTML;
 
 function closeModal() {
-    backdrop.classList.remove('open')
+    backdrop.classList.remove('open');
+    form.innerHTML = originalForm;
+    attachForm();
 }
 async function saveSession(e) {
     e.preventDefault();
@@ -519,8 +550,8 @@ async function saveSession(e) {
         notes: document.getElementById('notes').value.trim(),
         next: document.getElementById('progressNote').value.trim(),
         actualBlocks: document.getElementById('actualBlocks').value.trim(),
-        planMinutes: total(state.plan),
-        plan: JSON.parse(JSON.stringify(state.plan))
+        planMinutes: total(sessionWorkout || state.plan),
+        plan: structuredClone(sessionWorkout || state.plan)
     };
     setSync('Salvando…', 'busy');
     const {
@@ -543,6 +574,7 @@ async function saveSession(e) {
         return
     }
     state.sessions.unshift(remoteToLocal(data));
+    if (sessionWorkout) { resetWorkout(); sessionWorkout = null; }
     save();
     setSync('Neste aparelho');
     closeModal();
@@ -611,3 +643,106 @@ function setupInstall() {
     };
     if (!navigator.userAgent.includes('NadoFoss/1') && 'serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => {})
 }
+
+
+// Original, local workout examples. All durations can be changed before starting.
+const workoutTemplates = [
+    {name: 'Blocos simples · 15 min', note: 'Um modelo curto para organizar sua sessão.', plan: [
+        {name:'Entrada na água', minutes:3, type:'leve', detail:'Use o estilo de sua preferência.'},
+        {name:'Bloco principal', minutes:9, type:'nado', detail:'Ajuste o ritmo e faça pausas quando precisar.'},
+        {name:'Finalização', minutes:3, type:'leve', detail:'Movimento leve.'}]},
+    {name: 'Séries curtas · 20 min', note: 'Seis repetições de 90 segundos, com 30 segundos entre elas.', plan: [
+        {name:'Aquecimento', minutes:4, type:'leve', detail:'Estilo livre à sua escolha.'},
+        {name:'Série principal', minutes:11.5, type:'serie', rounds:6, workSeconds:90, restSeconds:30, detail:'Escolha o estilo e ajuste a duração antes de iniciar.'},
+        {name:'Finalização', minutes:4.5, type:'leve', detail:'Termine no seu ritmo.'}]},
+    {name: 'Ritmo constante · 30 min', note: 'Três blocos de cinco minutos, com um minuto entre eles.', plan: [
+        {name:'Aquecimento', minutes:5, type:'leve', detail:'Comece com tranquilidade.'},
+        {name:'Blocos de nado', minutes:17, type:'serie', rounds:3, workSeconds:300, restSeconds:60, detail:'Escolha seu estilo de nado.'},
+        {name:'Finalização', minutes:8, type:'leve', detail:'Ajuste conforme sua sessão.'}]}
+];
+let workout = null;
+let workoutInterval = null;
+function workoutPhases(plan) {
+    return plan.flatMap(b => {
+        if (b.type !== 'serie' || !b.rounds) return [{name:b.name, detail:b.detail || '', seconds:Math.round(b.minutes * 60), rest:b.type === 'descanso'}];
+        return Array.from({length:b.rounds}, (_, i) => [
+            {name:`${b.name} · ${i + 1}/${b.rounds}`, detail:b.detail || '', seconds:b.workSeconds, rest:false},
+            ...(i < b.rounds - 1 && b.restSeconds > 0 ? [{name:`Pausa · ${i + 1}/${b.rounds - 1}`, detail:'Próxima repetição após a pausa.', seconds:b.restSeconds, rest:true}] : [])
+        ]).flat();
+    });
+}
+function workoutElapsed() {
+    return workout.elapsed + (workout.running ? (Date.now() - workout.startedAt) / 1000 : 0);
+}
+function drawWorkout() {
+    if (!workout) return;
+    const elapsed = Math.min(workout.total, workoutElapsed());
+    let offset = 0, index = 0;
+    while (index < workout.phases.length && elapsed >= offset + workout.phases[index].seconds) offset += workout.phases[index++].seconds;
+    const finished = index >= workout.phases.length;
+    if (index !== workout.index && workout.running) beep();
+    workout.index = index;
+    if (finished) {
+        workout.elapsed = workout.total; workout.running = false;
+        clearInterval(workoutInterval); workoutInterval = null;
+    }
+    const phase = workout.phases[index];
+    document.getElementById('workoutPhase').textContent = finished ? 'Treino concluído' : `${phase.rest ? 'Pausa' : 'Nado'} · ${phase.name}`;
+    const seconds = finished ? 0 : Math.max(0, Math.ceil(offset + phase.seconds - elapsed));
+    document.getElementById('workoutClock').textContent = `${String(Math.floor(seconds / 60)).padStart(2,'0')}:${String(seconds % 60).padStart(2,'0')}`;
+    document.getElementById('workoutProgress').max = workout.total;
+    document.getElementById('workoutProgress').value = elapsed;
+    document.getElementById('workoutDetail').textContent = finished ? 'Revise os dados antes de salvar a sessão.' : `${index + 1}/${workout.phases.length} etapas · ${phase.detail}${workout.running ? '' : ' · Pausado'}`;
+    document.getElementById('workoutPause').hidden = finished;
+    document.getElementById('workoutPause').textContent = workout.running ? 'Pausar' : 'Continuar';
+    document.getElementById('workoutRegister').hidden = !finished;
+}
+function setupWorkouts() {
+    document.getElementById('workoutLibrary').onclick = () => {
+        document.getElementById('modalTitle').textContent = 'Modelos de treino';
+        form.innerHTML = `<p class="sub">Pontos de partida editáveis. Escolher um modelo substitui apenas o plano atual.</p><div class="workout-models">${workoutTemplates.map((t,i) => `<div class="plan-next"><h3>${escapeHtml(t.name)}</h3><p>${escapeHtml(t.note)}</p><p class="sub">${t.plan.map(b => escapeHtml(b.name) + ': ' + b.minutes + ' min').join(' · ')}</p><button class="btn btn-secondary" type="button" data-template="${i}">Personalizar este modelo</button></div>`).join('')}</div>`;
+        backdrop.classList.add('open');
+        form.querySelectorAll('[data-template]').forEach(btn => btn.onclick = () => {
+            planDraft = structuredClone(workoutTemplates[+btn.dataset.template].plan);
+            drawPlanEditor('');
+        });
+    };
+    document.getElementById('workoutStart').onclick = () => {
+        if (workout && !confirm('Substituir o treino em execução ou ainda não registrado?')) return;
+        if (total(state.plan) > 240) return toast('Ajuste o treino para no máximo 240 minutos.');
+        clearInterval(workoutInterval);
+        const plan = structuredClone(state.plan), phases = workoutPhases(plan);
+        workout = {plan, phases, total:phases.reduce((n,p) => n + p.seconds,0), elapsed:0, startedAt:Date.now(), running:true, index:0};
+        try {
+            audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+            if (audioContext.state === 'suspended') audioContext.resume();
+        } catch {}
+        document.getElementById('workoutCard').hidden = false;
+        drawWorkout();
+        workoutInterval = setInterval(drawWorkout, 250);
+        document.getElementById('workoutCard').scrollIntoView({behavior:'smooth',block:'center'});
+    };
+    document.getElementById('workoutPause').onclick = () => {
+        if (!workout) return;
+        if (workout.running) { workout.elapsed = workoutElapsed(); workout.running = false; }
+        else { workout.startedAt = Date.now(); workout.running = true; }
+        drawWorkout();
+    };
+    document.getElementById('workoutCancel').onclick = () => {
+        if (!confirm('Encerrar este treino sem registrar?')) return;
+        resetWorkout();
+    };
+    document.getElementById('workoutRegister').onclick = () => {
+        if (!workout) return;
+        form.innerHTML = originalForm; attachForm(); openModal();
+        sessionWorkout = structuredClone(workout.plan);
+        document.getElementById('durationActual').value = Math.max(1, Math.round(workout.total / 60));
+        document.getElementById('actualBlocks').value = workout.plan.map(b => `${Math.round(+b.minutes * 100) / 100} min · ${b.name}${b.rounds ? ` · ${b.rounds} × ${b.workSeconds} s / pausa ${b.restSeconds} s` : ''}`).join('\n');
+    };
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) drawWorkout(); });
+}
+function resetWorkout() {
+    clearInterval(workoutInterval); workoutInterval = null; workout = null;
+    document.getElementById('workoutCard').hidden = true;
+}
+setupWorkouts();

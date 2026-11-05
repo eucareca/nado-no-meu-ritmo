@@ -1,0 +1,1 @@
+Optional encrypted automatic backup: choose Google Drive, account and folder with the Android file picker. Backups after edits, background queue, retries, status and disconnect. Manual password-based restore; photos excluded.

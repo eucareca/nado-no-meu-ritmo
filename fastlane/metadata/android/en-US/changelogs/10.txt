@@ -1,0 +1,1 @@
+Light, dark and automatic appearance with on-device preference. Local photo composer using the app logo, optional caption and feed/square/story sizes. Save PNG or share through a chosen app, with no automatic posting.

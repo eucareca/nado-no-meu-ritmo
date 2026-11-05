@@ -1,0 +1,1 @@
+Weekly swim planning, local Android reminders, recurring calendar event review and browser .ics export. Attendance based on recorded days, schedule revision history and backup restore with reminders disabled.
