@@ -7,7 +7,7 @@ Esta árvore contém o código completo da versão 1.10.0 (versionCode 11), sob 
 Repositório público informado e verificado: https://github.com/eucareca/nado-no-meu-ritmo  
 Issues: https://github.com/eucareca/nado-no-meu-ritmo/issues
 
-A receita referencia a versão 1.10.0 (versionCode 11) na tag `v1.10.0`. A publicação automática cria essa tag somente depois de um build aprovado da branch principal. O pedido para o F-Droid está preparado em `docs/PEDIDO-F-DROID.md`; o envio continua pendente até existir uma issue/MR confirmada no GitLab. O site do responsável é https://tabinformatica.com.br/nadonoseuritmo.
+A receita referencia a versão 1.10.0 (versionCode 11) na tag `v1.10.0`. A publicação automática cria essa tag somente depois de um build aprovado da branch principal. O pedido oficial foi enviado em 05/11/2026: https://gitlab.com/fdroid/rfp/-/work_items/4743 . Está aberto para análise; ainda não há aprovação, compilação ou publicação na loja confirmadas. O texto técnico de referência está em `docs/PEDIDO-F-DROID.md`. O site do responsável é https://tabinformatica.com.br/nadonoseuritmo.
 
 O F-Droid exige fonte público e compila a versão referenciada pela receita; um repositório vazio, um ZIP ou um APK isolado não atende esse requisito. A inclusão depende da revisão dos mantenedores.
 

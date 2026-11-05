@@ -1,6 +1,6 @@
 # Instalação e atualização sem cabo USB
 
-A versão 1.10.0 será publicada na branch principal e na tag v1.10.0 após as verificações automáticas. A rotina `Compilar APK Android` compila e verifica os APKs no GitHub Actions, em cada push para `main` ou `feat/treinos-guiados`, em pull requests para `main` e por execução manual após a rotina estar na branch padrão.
+O código-fonte da versão 1.10.0 foi publicado na branch principal e na tag v1.10.0: https://github.com/eucareca/nado-no-meu-ritmo/releases/tag/v1.10.0 . O APK de produção publicado está sem assinatura e não é instalável diretamente; falta assinar com a chave original. A rotina `Compilar APK Android` compila e verifica os APKs no GitHub Actions, em cada push para `main` ou `feat/treinos-guiados`, em pull requests para `main` e por execução manual após a rotina estar na branch padrão.
 
 ## Baixar e experimentar
 

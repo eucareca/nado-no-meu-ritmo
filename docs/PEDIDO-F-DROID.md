@@ -1,5 +1,9 @@
 # Nado no meu ritmo
 
+Pedido oficial enviado em 05/11/2026: https://gitlab.com/fdroid/rfp/-/work_items/4743 . Status verificado no envio: aberto, aguardando triagem.
+
+A referência técnica abaixo foi preparada antes do envio; a versão efetivamente submetida consta na issue acima.
+
 - Application ID: `br.com.tabinformatica.nadonomeritmo`
 - Version: 1.10.0 / versionCode 11
 - Source repository: https://github.com/eucareca/nado-no-meu-ritmo
@@ -24,4 +28,4 @@ OpenJDK 17, Gradle 8.11.1, AGP 8.9.2, compileSdk 36, Build Tools 35.0.0. Synchro
 
 The GitHub workflow tests local storage, encrypted backups/restoration, workouts, optional health import, schedules/calendar conflicts, themes/photo export and automatic backup bridge with synthetic data. It compiles debug/release and runs lint. Physical-device validation of provider uploads, permissions and integrations is still pending. No claim of independent security audit or guaranteed F-Droid acceptance is made.
 
-The recipe and source are ready for packager review. Please advise of required metadata or build-environment adjustments. No request is considered submitted until an issue or merge-request URL has been confirmed.
+The recipe and source are ready for packager review. Please advise of required metadata or build-environment adjustments. The confirmed packaging request is linked at the top; acceptance and publication remain pending review.
